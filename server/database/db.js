@@ -1,16 +1,34 @@
 'use strict'
+const fs = require('fs')
 const path = require('path')
 const Database = require('better-sqlite3')
 
-const db = new Database(path.join(__dirname, '..', 'harpia.db'))
+function initDatabase() {
+  const preferredPath = process.env.DB_PATH || path.join(__dirname, '..', 'harpia.db')
+  try {
+    const instance = new Database(preferredPath)
+    console.log(`[DB] Base de dados ligada em: ${preferredPath}`)
+    return instance
+  } catch (err) {
+    console.warn(`[DB] Falha ao abrir em ${preferredPath} (${err.message}) — a usar fallback seguro em /tmp/harpia.db`)
+    const tmpPath = path.join('/tmp', 'harpia.db')
+    const instance = new Database(tmpPath)
+    console.log(`[DB] Base de dados ligada com sucesso em: ${tmpPath}`)
+    return instance
+  }
+}
+
+const db = initDatabase()
 
 // Performance and integrity PRAGMAs
-db.pragma('journal_mode = WAL')
-db.pragma('synchronous = NORMAL')
-db.pragma('foreign_keys = ON')  // FIX BUG-DB1: foreign key constraints were silently disabled
 try {
+  db.pragma('journal_mode = WAL')
+  db.pragma('synchronous = NORMAL')
+  db.pragma('foreign_keys = ON')  // FIX BUG-DB1: foreign key constraints were silently disabled
   db.pragma('wal_checkpoint(TRUNCATE)')
-} catch (_) {}
+} catch (e) {
+  console.warn('[DB] Aviso de PRAGMAs:', e.message)
+}
 
 // Tabelas principais
 db.exec(`
