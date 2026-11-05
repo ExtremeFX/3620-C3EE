@@ -1,0 +1,1709 @@
+/* ==========================================================================
+   HARPIA UNIVERSE - Space Station Hangar, EVE-style Inventory & Market
+   ========================================================================== */
+
+/* ── OVERLAY MAXIMIZADO: INTERIOR DO HANGAR DA ESTAÇÃO ── */
+.station-hangar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s;
+  background: #010408;
+  overflow: hidden;
+}
+
+/* Quando o hangar da estação estiver fechado, NADA no seu interior pode receber cliques ou reter visibilidade */
+.station-hangar-overlay:not(.active),
+.station-hangar-overlay:not(.active) * {
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+.station-hangar-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.station-hangar-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.04);
+  transition: transform 1.2s cubic-bezier(0.1, 0.8, 0.2, 1);
+  will-change: transform;
+}
+
+.station-hangar-overlay.active .station-hangar-bg {
+  transform: scale(1.0);
+}
+
+.station-hangar-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 30px 40px;
+  box-sizing: border-box;
+  background: radial-gradient(circle at center, transparent 40%, rgba(0, 5, 12, 0.65) 100%);
+}
+
+.station-top-nav {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  z-index: 25;
+  pointer-events: auto;
+}
+
+.station-nav-btn {
+  background: rgba(0, 15, 28, 0.88);
+  border: 1.5px solid rgba(0, 240, 255, 0.45);
+  color: rgba(0, 240, 255, 0.85);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  padding: 10px 26px;
+  min-width: 170px;
+  text-align: center;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.15), inset 0 0 10px rgba(0, 240, 255, 0.05);
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  user-select: none;
+  pointer-events: auto;
+}
+
+.station-nav-btn:hover {
+  background: rgba(0, 240, 255, 0.16);
+  border-color: #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.5), inset 0 0 15px rgba(0, 240, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.station-nav-btn:active {
+  transform: translateY(1px);
+}
+
+.station-nav-btn.active {
+  background: linear-gradient(180deg, rgba(0, 240, 255, 0.25) 0%, rgba(0, 20, 35, 0.92) 100%);
+  border-color: #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.6), inset 0 0 14px rgba(0, 240, 255, 0.3);
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
+}
+
+.undock-btn {
+  position: absolute;
+  bottom: 28px;
+  right: 40px;
+  z-index: 20;
+  pointer-events: auto;
+  background: linear-gradient(135deg, rgba(0, 30, 50, 0.85) 0%, rgba(0, 15, 30, 0.95) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.6);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.35), inset 0 0 15px rgba(0, 240, 255, 0.15);
+  color: #00f0ff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  padding: 12px 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.3, 1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-transform: uppercase;
+}
+
+.undock-btn:hover {
+  background: linear-gradient(135deg, rgba(0, 50, 80, 0.95) 0%, rgba(0, 25, 45, 0.98) 100%);
+  border-color: #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.7), inset 0 0 25px rgba(0, 240, 255, 0.4);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.undock-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.undock-icon {
+  font-size: 1.2rem;
+}
+
+/* ── PAINÉIS HOLOGRÁFICOS LATERAIS DO HANGAR (ESQUERDO E DIREITO) ── */
+.hangar-side-panel {
+  position: absolute;
+  top: calc(50% - 25px);
+  transform: translateY(-50%);
+  width: 460px;
+  height: 700px;
+  max-height: calc(100vh - 160px);
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  filter: drop-shadow(0 0 20px rgba(0, 200, 255, 0.45));
+  will-change: transform, opacity;
+  animation: panelGlowPulse 4s ease-in-out infinite alternate;
+}
+
+.hangar-panel-right {
+  right: 40px;
+}
+
+.hangar-panel-left {
+  left: 40px;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+}
+
+.hangar-panel-left.collapsed,
+.station-hangar-overlay.mode-assembly .hangar-panel-left:not(#ship-specs-panel) {
+  transform: translateY(-50%) translateX(calc(-100% - 80px));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hangar-panel-left .hangar-panel-svg {
+  transform: scaleX(-1);
+}
+
+@keyframes panelGlowPulse {
+  0% {
+    filter: drop-shadow(0 0 15px rgba(0, 180, 255, 0.35));
+  }
+  100% {
+    filter: drop-shadow(0 0 30px rgba(0, 240, 255, 0.65));
+  }
+}
+
+.hangar-panel-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.45));
+}
+
+.hangar-panel-bg {
+  fill: #000000 !important;
+  fill-opacity: 0.85 !important;
+}
+
+.hangar-panel-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 68px 30px 32px 30px;
+}
+
+.hangar-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px 14px 14px;
+  border-bottom: 1.5px solid rgba(0, 240, 255, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 240, 255, 0.08);
+}
+
+.hangar-panel-header .panel-tag {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.82rem;
+  letter-spacing: 3px;
+  font-weight: 900;
+  color: #00f0ff;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.85);
+  user-select: none;
+}
+
+.panel-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-stack-all {
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: #00f0ff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.15) inset;
+  user-select: none;
+}
+
+.btn-stack-all:hover {
+  background: rgba(0, 240, 255, 0.25);
+  border-color: #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.6), 0 0 8px rgba(0, 240, 255, 0.3) inset;
+  transform: translateY(-1px);
+}
+
+.btn-stack-all:active {
+  transform: scale(0.96);
+}
+
+.btn-stack-all .stack-icon {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.panel-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00ffaa;
+  box-shadow: 0 0 10px #00ffaa;
+  animation: blinkStatus 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes blinkStatus {
+  0% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.hangar-panel-inner-slot {
+  flex: 1;
+  margin-top: 14px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── PAINEL HOLOGRÁFICO INFERIOR CENTRAL DO HANGAR ── */
+.hangar-bottom-panel {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 680px;
+  max-width: calc(100vw - 440px);
+  height: 165px;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  filter: drop-shadow(0 0 20px rgba(0, 200, 255, 0.45));
+  will-change: transform, opacity;
+  animation: panelGlowPulse 4s ease-in-out infinite alternate;
+}
+
+.hangar-bottom-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 14px 28px 12px 28px;
+}
+
+.hangar-bottom-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 8px 8px 8px;
+  border-bottom: 1.5px solid rgba(0, 240, 255, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 240, 255, 0.08);
+}
+
+.hangar-bottom-header .panel-tag {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 3px;
+  font-weight: 900;
+  color: #00f0ff;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.85);
+  user-select: none;
+}
+
+.hangar-bottom-inner {
+  flex: 1;
+  margin-top: 6px;
+  border-radius: 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── COMPONENTES INTERNOS DOS PAINÉIS DO HANGAR (PADRÃO AAA) ── */
+.storage-cargo-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.storage-meta-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.70rem;
+  letter-spacing: 1.5px;
+  color: rgba(0, 240, 255, 0.75);
+}
+
+.storage-meta-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: #00f0ff;
+}
+
+.storage-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 25, 45, 0.75);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.8);
+}
+
+.storage-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0088cc 0%, #00f0ff 100%);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.7);
+  transition: width 0.4s ease;
+}
+
+/* ── Dica Drag & Drop Estilo Eve Online ── */
+.storage-drag-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.60rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #00ffaa;
+  background: rgba(0, 255, 170, 0.08);
+  border: 1px dashed rgba(0, 255, 170, 0.35);
+  border-radius: 4px;
+  padding: 5px 8px;
+  margin-bottom: 10px;
+  text-shadow: 0 0 8px rgba(0, 255, 170, 0.5);
+  animation: hintPulse 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes hintPulse {
+  0% { opacity: 0.7; border-color: rgba(0, 255, 170, 0.25); }
+  100% { opacity: 1; border-color: rgba(0, 255, 170, 0.65); box-shadow: 0 0 10px rgba(0, 255, 170, 0.2); }
+}
+
+.drag-hint-icon {
+  font-size: 0.8rem;
+  color: #00ffaa;
+}
+
+/* ── Grelha Modular de Quadrados de Itens (Eve Online Inventory) ── */
+.storage-items-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  flex: 1;
+  padding: 4px;
+}
+
+/* Card Completo: Quadrado + Footer com Nome e Unidades */
+.storage-item-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  position: relative;
+}
+
+.storage-item-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.storage-item-card.is-dragging {
+  opacity: 0.45;
+  transform: scale(0.92);
+  filter: brightness(1.3);
+}
+
+.storage-item-card:not(.empty-slot):hover {
+  transform: translateY(-2px);
+}
+
+/* Quadrado Holográfico com Borda Tech e Glow */
+.storage-item-square {
+  width: 76px;
+  height: 76px;
+  background: radial-gradient(circle at center, rgba(0, 45, 80, 0.6) 0%, rgba(0, 10, 24, 0.95) 100%);
+  border: 1.5px solid rgba(0, 240, 255, 0.5);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.2) inset, 0 4px 10px rgba(0, 0, 0, 0.7);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.storage-item-card:hover .storage-item-square {
+  border-color: #00f0ff;
+  box-shadow: 0 0 16px var(--item-glow, rgba(0, 240, 255, 0.5)), 0 0 20px rgba(0, 240, 255, 0.3) inset;
+}
+
+/* Imagem do Item em Alta Resolução */
+.storage-slot-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+  display: block;
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.45));
+  pointer-events: none;
+  transition: transform 0.25s ease;
+}
+
+.storage-item-card:hover .storage-slot-img {
+  transform: scale(1.08);
+}
+
+.storage-slot-placeholder-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+.storage-slot-type-badge {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: rgba(0, 240, 255, 0.9);
+  background: rgba(0, 15, 30, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  border-radius: 2px;
+  padding: 1px 4px;
+  pointer-events: none;
+}
+
+/* Footer com Unidades por baixo do Quadrado */
+.storage-item-footer {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
+.storage-item-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+.storage-item-units {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #00ffaa;
+  text-shadow: 0 0 6px rgba(0, 255, 170, 0.6);
+  margin-top: 1px;
+}
+
+/* ── Badge de Quantidade de Pilha no Canto (EVE Online Stack Quantity) ── */
+.storage-stack-qty {
+  position: absolute;
+  bottom: 3px;
+  right: 4px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.60rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  background: rgba(0, 15, 30, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  border-radius: 2px;
+  padding: 1px 4px;
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.8);
+  pointer-events: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
+}
+
+/* ── Estado Vazio Tático do Contentor (EVE Online Empty Container) ── */
+.storage-empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 10px;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.storage-empty-icon {
+  font-size: 2.4rem;
+  color: rgba(0, 240, 255, 0.4);
+  margin-bottom: 8px;
+}
+
+.storage-empty-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: rgba(0, 240, 255, 0.75);
+  margin-bottom: 4px;
+}
+
+.storage-empty-hint {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.60rem;
+  letter-spacing: 1px;
+  color: rgba(0, 255, 170, 0.6);
+}
+
+/* Slots Livres com Crosshair de Mira Tech */
+.storage-item-card.empty-slot {
+  cursor: pointer;
+  opacity: 0.38;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.storage-item-card.empty-slot:hover {
+  opacity: 0.75;
+  transform: translateY(-2px);
+}
+
+.storage-item-card.empty-slot.drag-target-hover {
+  opacity: 1 !important;
+  transform: scale(1.06) !important;
+}
+
+.storage-item-card.empty-slot.drag-target-hover .storage-item-square.empty-square {
+  border-color: #00f0ff !important;
+  background: rgba(0, 240, 255, 0.18) !important;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.6) !important;
+}
+
+/* Efeito visual quando um item é arrastado para cima de um item igual para fazer STACK */
+.storage-item-card.stack-target-hover {
+  transform: scale(1.08) translateY(-3px) !important;
+}
+
+.storage-item-card.stack-target-hover .storage-item-square {
+  border-color: #00ffaa !important;
+  box-shadow: 0 0 20px rgba(0, 255, 170, 0.75), inset 0 0 15px rgba(0, 255, 170, 0.4) !important;
+}
+
+.storage-item-card.stack-target-hover .storage-item-units {
+  color: #ffffff !important;
+  text-shadow: 0 0 10px #00ffaa !important;
+}
+
+.storage-item-square.empty-square {
+  background: rgba(0, 10, 20, 0.4);
+  border: 1px dashed rgba(0, 240, 255, 0.3);
+  box-shadow: none;
+  transition: all 0.25s ease;
+}
+
+.slot-crosshair {
+  width: 16px;
+  height: 16px;
+  position: relative;
+}
+
+.slot-crosshair::before,
+.slot-crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(0, 240, 255, 0.3);
+}
+
+.slot-crosshair::before {
+  top: 7px;
+  left: 0;
+  width: 16px;
+  height: 2px;
+}
+
+.slot-crosshair::after {
+  top: 0;
+  left: 7px;
+  width: 2px;
+  height: 16px;
+}
+
+.empty-text {
+  color: rgba(255, 255, 255, 0.3) !important;
+  font-size: 0.58rem !important;
+  text-shadow: none !important;
+}
+
+/* ── Drop Zone Visual estilo EVE Online na Estação ── */
+.storage-drop-zone {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  min-height: 220px;
+}
+
+.drop-zone-crosshairs .crosshair {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: rgba(0, 240, 255, 0.4);
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 5;
+}
+
+.drop-zone-crosshairs .tl { top: -2px; left: -2px; border-top: 2px solid; border-left: 2px solid; }
+.drop-zone-crosshairs .tr { top: -2px; right: -2px; border-top: 2px solid; border-right: 2px solid; }
+.drop-zone-crosshairs .bl { bottom: -2px; left: -2px; border-bottom: 2px solid; border-left: 2px solid; }
+.drop-zone-crosshairs .br { bottom: -2px; right: -2px; border-bottom: 2px solid; border-right: 2px solid; }
+
+.drop-zone-indicator {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px dashed #00f0ff;
+  border-radius: 4px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #00f0ff;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+  animation: dropHintPulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes dropHintPulse {
+  0% { background: rgba(0, 240, 255, 0.08); border-color: rgba(0, 240, 255, 0.4); }
+  100% { background: rgba(0, 240, 255, 0.22); border-color: #00f0ff; box-shadow: 0 0 14px rgba(0, 240, 255, 0.35); }
+}
+
+/* Quando um item começa a ser arrastado */
+.storage-drop-zone.awaiting-drop {
+  border: 1.5px dashed rgba(0, 240, 255, 0.5);
+  background: rgba(0, 30, 50, 0.25);
+}
+
+.storage-drop-zone.awaiting-drop .drop-zone-indicator {
+  display: flex;
+}
+
+/* Quando o cursor paira sobre a zona com o item */
+.storage-drop-zone.drag-over {
+  border: 2px solid #00ffaa !important;
+  background: rgba(0, 50, 40, 0.45) !important;
+  box-shadow: 0 0 25px rgba(0, 255, 170, 0.4) inset, 0 0 20px rgba(0, 255, 170, 0.3);
+  transform: scale(1.01);
+}
+
+.storage-drop-zone.drag-over .drop-zone-indicator {
+  display: flex;
+  background: rgba(0, 255, 170, 0.25);
+  border-color: #00ffaa;
+  color: #00ffaa;
+}
+
+.storage-actions {
+  margin-top: 10px;
+}
+
+.panel-action-btn {
+  width: 100%;
+  padding: 10px 14px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #00f0ff;
+  background: linear-gradient(135deg, rgba(0, 30, 50, 0.85) 0%, rgba(0, 15, 30, 0.95) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+  transition: all 0.25s ease;
+}
+
+.panel-action-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(0, 50, 80, 0.95) 0%, rgba(0, 25, 45, 0.98) 100%);
+  border-color: #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.panel-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.storage-station-status {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(0, 10, 20, 0.6);
+  border-radius: 3px;
+  border-left: 2.5px solid #00ffaa;
+}
+
+.status-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.status-val.safe {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: #00ffaa;
+  letter-spacing: 1.5px;
+}
+
+/* Frotas no Hangar (Box Inferior) */
+.hangar-fleet-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.hangar-fleet-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 20, 38, 0.65);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 5px;
+  padding: 8px 14px;
+  transition: all 0.25s ease;
+}
+
+.hangar-fleet-card.active-ship {
+  border-color: #00f0ff;
+  background: rgba(0, 35, 60, 0.85);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.35);
+}
+
+.fleet-card-icon {
+  font-size: 1.4rem;
+}
+
+.fleet-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fleet-ship-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #ffffff;
+}
+
+.fleet-ship-qty {
+  font-size: 0.68rem;
+  color: rgba(0, 240, 255, 0.8);
+}
+
+.fleet-switch-btn {
+  background: rgba(0, 50, 80, 0.85);
+  border: 1px solid #00f0ff;
+  color: #00f0ff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fleet-switch-btn:hover {
+  background: #00f0ff;
+  color: #001020;
+}
+
+.fleet-active-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #00ffaa;
+  background: rgba(0, 255, 170, 0.15);
+  border: 1px solid rgba(0, 255, 170, 0.5);
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+
+/* ── Ship Thumbnail Quadrado (Imagem / Video) ────────────────────── */
+.fleet-ship-thumbnail {
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(0, 240, 255, 0.6);
+  border-radius: 4px;
+  overflow: hidden;
+  background: radial-gradient(circle at center, rgba(0, 45, 80, 0.5) 0%, rgba(0, 10, 20, 0.95) 100%);
+  position: relative;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.25) inset, 0 0 8px rgba(0, 240, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fleet-ship-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+  display: block;
+}
+
+.fleet-ship-thumbnail--icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+}
+
+/* ── User Profile Bar (Modular Component) ────────────────────────── */
+
+/* Contentor externo: empilha pill + wallet-box verticalmente */
+.user-profile-container {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  left: auto;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+body.in-game .user-profile-container {
+  top: 18px;
+  left: 24px;
+  right: auto;
+  align-items: flex-start;
+}
+
+/* Pill horizontal: Nome | PI | [LOGOUT] */
+.user-profile {
+  background: rgba(0, 10, 20, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 6px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.user-profile-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #00f0ff;
+}
+
+.user-profile-pi {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #00ffaa;
+  background: rgba(0, 255, 170, 0.1);
+  border: 1px solid rgba(0, 255, 170, 0.3);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+body.in-game .user-profile-logout-btn {
+  display: none !important;
+}
+
+.user-profile-logout-btn {
+  background: none;
+  border: 1px solid rgba(255, 70, 70, 0.4);
+  color: #ff6464;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+}
+
+.user-profile-logout-btn:hover {
+  background: rgba(255, 70, 70, 0.2);
+  border-color: #ff6464;
+  color: #ffffff;
+}
+
+/* ── WALLET HUD Box (abaixo do pill) ────────────────────────────── */
+.user-wallet-box {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 8, 18, 0.92);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  border-left: 3px solid #00f0ff;
+  border-radius: 5px;
+  padding: 6px 14px;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.18), inset 0 0 8px rgba(0, 240, 255, 0.06);
+  backdrop-filter: blur(8px);
+  min-width: 160px;
+}
+
+body.in-game .user-wallet-box {
+  display: flex;
+}
+
+.user-wallet-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: rgba(0, 240, 255, 0.7);
+  text-transform: uppercase;
+}
+
+.user-wallet-amount {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ffcc00;
+  text-shadow: 0 0 8px rgba(255, 204, 0, 0.6);
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   EVE ONLINE STYLE SPLIT STACK / QUANTITY SELECTOR MODAL (AAA)
+   ═════════════════════════════════════════════════════════════════════ */
+.split-stack-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 5, 12, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.split-stack-overlay.active {
+  display: flex;
+}
+
+.split-stack-dialog {
+  width: 440px;
+  background: linear-gradient(135deg, rgba(2, 14, 28, 0.95), rgba(1, 8, 16, 0.98));
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.25), inset 0 0 20px rgba(0, 240, 255, 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+  font-family: 'Orbitron', sans-serif;
+  animation: splitModalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes splitModalIn {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.split-stack-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(0, 240, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+}
+
+.split-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.split-icon {
+  font-size: 1.1rem;
+}
+
+.split-title-text {
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #00f0ff;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+}
+
+.split-close-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: rgba(0, 240, 255, 0.7);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.split-close-btn:hover {
+  background: rgba(255, 60, 60, 0.2);
+  border-color: rgba(255, 60, 60, 0.6);
+  color: #ff6464;
+}
+
+.split-stack-body {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.split-item-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(0, 20, 40, 0.5);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  padding: 12px;
+  border-radius: 4px;
+}
+
+.split-item-thumb {
+  width: 60px;
+  height: 60px;
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.split-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.split-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.split-item-name {
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #00f0ff;
+}
+
+.split-item-meta {
+  font-size: 0.72rem;
+  color: rgba(180, 230, 255, 0.8);
+  letter-spacing: 1px;
+}
+
+.split-direction-tag {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #00ffaa;
+  margin-top: 2px;
+}
+
+.split-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.split-input-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.split-input-label {
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  color: rgba(180, 230, 255, 0.9);
+}
+
+.split-number-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.split-step-btn {
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  color: #00f0ff;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.split-step-btn:hover {
+  background: rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.split-number-input {
+  width: 80px;
+  height: 32px;
+  background: rgba(0, 10, 20, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  border-radius: 3px;
+  color: #00f0ff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+}
+
+.split-number-input:focus {
+  border-color: #00f0ff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+}
+
+/* Slider Customizado EVE */
+.split-range-slider {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(0, 20, 40, 0.8);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+}
+
+.split-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #00f0ff;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.9);
+  border: 2px solid #ffffff;
+}
+
+.split-range-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #00f0ff;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.9);
+  border: 2px solid #ffffff;
+}
+
+.split-quick-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.split-quick-btn {
+  flex: 1;
+  padding: 6px 0;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 3px;
+  color: rgba(180, 240, 255, 0.9);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.split-quick-btn:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+}
+
+.split-stack-footer {
+  display: flex;
+  gap: 12px;
+  padding: 14px 20px;
+  background: rgba(0, 20, 35, 0.4);
+  border-top: 1px solid rgba(0, 240, 255, 0.15);
+}
+
+.split-action-btn {
+  flex: 1;
+  padding: 10px 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.split-action-btn.cancel-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 70, 70, 0.4);
+  color: #ff7070;
+}
+
+.split-action-btn.cancel-btn:hover {
+  background: rgba(255, 70, 70, 0.15);
+  border-color: #ff5050;
+  color: #ffffff;
+}
+
+.split-action-btn.confirm-btn {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(0, 255, 170, 0.3));
+  border: 1px solid #00f0ff;
+  color: #00f0ff;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+}
+
+.split-action-btn.confirm-btn:hover {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.4), rgba(0, 255, 170, 0.5));
+  color: #ffffff;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
+}
+
+
+
+
+
+/* ================================================
+   SHIP SPECS PANEL — Assembly Mode (v8.8)
+   ================================================ */
+
+#ship-specs-panel {
+  transform: translateY(-50%) translateX(calc(-100% - 80px));
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+}
+
+#ship-specs-panel:not(.collapsed) {
+  transform: translateY(-50%) translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.specs-ship-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+}
+
+.specs-ship-img {
+  width: 120px;
+  height: 80px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.6));
+}
+
+.specs-ship-model {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #00f0ff;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
+}
+
+.ship-specs-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.specs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 212, 255, 0.3) transparent;
+}
+
+.specs-line {
+  font-size: 0.82rem;
+  color: #d0f0ff;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+/* ================================================
+   ASSEMBLY CENTRAL SHIP VIEWPORT
+   ================================================ */
+.assembly-ship-viewport {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
+  width: 520px;
+  height: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.5s ease;
+  z-index: 12;
+}
+
+.station-hangar-overlay.mode-assembly .assembly-ship-viewport {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.assembly-ship-glow {
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.22) 0%, rgba(0, 140, 255, 0.08) 50%, transparent 75%);
+  filter: blur(20px);
+  pointer-events: none;
+  animation: assemblyPulse 4s ease-in-out infinite alternate;
+}
+
+.assembly-ship-img {
+  max-width: 440px;
+  max-height: 380px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 25px rgba(0, 240, 255, 0.55)) drop-shadow(0 15px 30px rgba(0, 0, 0, 0.8));
+  position: relative;
+  z-index: 2;
+  animation: assemblyFloat 5s ease-in-out infinite;
+  user-select: none;
+}
+
+.assembly-ship-platform {
+  position: absolute;
+  bottom: 30px;
+  width: 320px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.45) 0%, rgba(0, 240, 255, 0.1) 60%, transparent 100%);
+  filter: blur(6px);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
+  z-index: 1;
+}
+
+@keyframes assemblyFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes assemblyPulse {
+  0% {
+    opacity: 0.65;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+
+
+/* ================================================
+   SPACE ORE STORAGE HUD WIDGET (Top-Center)
+   ================================================ */
+.space-ore-storage {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  width: 360px;
+  background: rgba(0, 10, 20, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 6px;
+  padding: 8px 16px 10px 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 15px rgba(0, 240, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+}
+
+body:not(.in-game) .space-ore-storage,
+.station-hangar-overlay.active ~ #space-ore-mount .space-ore-storage,
+.space-ore-storage.hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+.space-ore-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.space-ore-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.space-ore-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00f0ff;
+  box-shadow: 0 0 8px #00f0ff;
+}
+
+.space-ore-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 2.5px;
+  color: #00f0ff;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+}
+
+.space-ore-cap-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #ffffff;
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.space-ore-bar-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(0, 20, 35, 0.8);
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+}
+
+.space-ore-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d4ff, #00ffaa);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.8);
+  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.space-ore-bar-fill.full {
+  background: linear-gradient(90deg, #ff9900, #ff3333);
+  box-shadow: 0 0 8px rgba(255, 60, 60, 0.8);
+}
+
+/* Slot Area for Mined Ore Squares (Eve Online style) */
+.space-ore-slot-area {
+  min-height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 4px 2px 2px 2px;
+  transition: min-height 0.2s ease;
+}
+
+.space-ore-storage.is-empty .space-ore-slot-area {
+  min-height: 52px;
+}
+
+.space-ore-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.storage-item-square.space-item-square {
+  width: 58px;
+  height: 58px;
+  border-radius: 6px;
+  position: relative;
+  background: radial-gradient(circle at center, rgba(0, 45, 80, 0.7) 0%, rgba(0, 10, 24, 0.95) 100%);
+  border: 1.5px solid rgba(0, 240, 255, 0.55);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.25) inset, 0 3px 8px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+
+.space-item-square .storage-slot-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.space-item-units-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  background: rgba(0, 15, 30, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.45);
+  border-radius: 2px;
+  padding: 1px 4px;
+  text-shadow: 0 0 4px rgba(0, 240, 255, 0.8);
+  pointer-events: none;
+}
+

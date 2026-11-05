@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HARPIA Universe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=16.2">
+</head>
+<body>
+
+  <!-- Game World Environment (Starfield Parallax with Smooth Dynamic Camera) -->
+  <div id="game-world" class="game-world">
+    <canvas id="starfield-canvas"></canvas>
+    
+    <!-- Celestial Planet (Red Planet on the right side of the screen) -->
+    <div class="celestial-planet-wrap" id="celestial-planet-wrap">
+      <img src="./assets/planets/planet_red.png?v=3" alt="Celestial Planet" class="celestial-planet-img">
+    </div>
+
+    <!-- Main Space Station (Docking Bay) -->
+    <div class="main-station-wrap" id="main-station-wrap">
+      <video id="main-station-video" autoplay loop muted playsinline class="main-station-vid">
+        <source src="./assets/Main_Station.webm" type="video/webm">
+      </video>
+    </div>
+
+    <!-- Active Mining Vessel (Mounted and rendered dynamically via ShipEntity) -->
+    <div class="center-ship-wrap" id="center-ship-wrap"></div>
+
+    <!-- Celestial Mining Asteroids (Mounted and rendered dynamically via AsteroidEntity) -->
+
+    <!-- Autonomous Grok Drones Layer in Space -->
+    <div class="drones-layer" id="drones-layer"></div>
+
+    <!-- Dynamic Dual Mining Lasers Layer (Ship to Asteroid) -->
+    <svg class="mining-lasers-layer" id="mining-lasers-layer"></svg>
+
+    <!-- Target Marker on Click -->
+    <div class="ship-target-marker" id="ship-target-marker"></div>
+
+    <!-- Top Space HUD (Coords + Starmap Button) -->
+    <div class="game-hud-top">
+      <span class="game-hud-coords">SECTOR Q-0014 • HARPIA BASE</span>
+      <button type="button" class="galaxy-map-hud-btn" id="galaxy-map-hud-btn" title="Abrir Mapa Galáctico [M]">⌖ GALAXY MAP [M]</button>
+    </div>
+
+    <!-- Interstellar Warp Route HUD Banner Mount Point -->
+    <div id="interstellar-warp-mount"></div>
+
+    <!-- Space Ore Storage Mount Point (Top-Center) -->
+    <div id="space-ore-mount"></div>
+
+    <!-- Ship Navigation HUD Mount Point (Bottom-Center) -->
+    <div id="ship-nav-mount"></div>
+
+    <!-- Back to Lobby Button (Bottom-Right Corner) -->
+    <button type="button" class="back-lobby-btn" id="back-lobby-btn" onclick="if(typeof exitGameWorld==='function'){exitGameWorld();}else if(window.HarpiaEngine?.bus){window.HarpiaEngine.bus.emit('game:exit');}">BACK TO LOBBY</button>
+
+    <!-- Station Interior Hangar Overlay (Maximized Dock View) -->
+    <div class="station-hangar-overlay" id="station-hangar-overlay">
+      <img src="./assets/station_hangar_interior.jpg" alt="Station Hangar" class="station-hangar-bg">
+      <div class="station-hangar-hud">
+        <!-- Station Top Navigation Bar -->
+        <nav class="station-top-nav" id="station-top-nav">
+          <button type="button" class="station-nav-btn active" id="btn-main-hangar">MAIN HANGAR</button>
+          <button type="button" class="station-nav-btn" id="btn-assembly">ASSEMBLY</button>
+          <button type="button" class="station-nav-btn" id="btn-market-station">MARKET STATION</button>
+        </nav>
+
+        <!-- Declarative Mount Points for Hangar Modular Panels -->
+        <div id="station-ore-storage-mount"></div>
+        <div id="station-storage-mount"></div>
+        <div id="station-ship-hangar-mount"></div>
+        <div id="station-drones-hangar-mount"></div>
+
+        <!-- Assembly Central Ship Viewport -->
+        <div class="assembly-ship-viewport" id="assembly-ship-viewport">
+          <div class="assembly-ship-glow"></div>
+          <img src="./assets/ships/MINING SHIPS/H-M2.png?v=2" alt="Active Ship Assembly" class="assembly-ship-img" id="assembly-ship-img">
+          <div class="assembly-ship-platform"></div>
+        </div>
+
+        <button type="button" class="undock-btn" id="undock-btn">
+          UNDOCK
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Galaxy Starmap Mount Point (Top-Level Modular Overlay) -->
+  <div id="galaxy-map-mount"></div>
+
+  <!-- Background Wallpaper / Video -->
+  <div class="bg">
+    <video id="lobby-bg-video" autoplay loop muted playsinline class="lobby-bg-vid">
+      <source src="./assets/Back2.webm" type="video/webm">
+    </video>
+  </div>
+
+  <!-- Declarative Mount Point for Full Modular Lobby -->
+  <div id="lobby-mount"></div>
+
+  <!-- In-game Notification Toast -->
+  <div id="game-toast" class="game-toast"></div>
+
+  <!-- AAA Game Engine Single Entry Point in ES Modules -->
+  <script type="module" src="src/main.js?v=13.8"></script>
+</body>
+</html>
+
+

@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# SQLite database (gerado automaticamente no primeiro boot)
+server/harpia.db
+server/harpia.db-shm
+server/harpia.db-wal
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

@@ -1,0 +1,362 @@
+/* ==========================================================================
+   HARPIA UNIVERSE - Spacecraft Rigging, Plasma Thrusters & FX
+   ========================================================================== */
+
+/* ── PROPULSOR TRASEIRO DE PLASMA ULTRA-REALISTA (GPU Compositing) ── */
+.ship-thruster-rig {
+  position: absolute;
+  top: 86%; /* Encaixe perfeito no bocal de escape traseiro da nave */
+  left: 50%;
+  transform: translate3d(-50%, 0, 0);
+  width: 18%;
+  height: 32%; /* Comprimento mais curto e proporcional */
+  z-index: 1; /* Atrás da fuselagem da nave */
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.3, 1), opacity 0.25s ease;
+  opacity: 0.7; /* Modo idle suave */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+/* Halo e nébula externa de plasma ciano/azul profundo */
+.thruster-outer-glow {
+  position: absolute;
+  top: 0;
+  width: 170%;
+  height: 95%;
+  border-radius: 50% 50% 60% 60%;
+  background: radial-gradient(ellipse at 50% 15%, rgba(0, 240, 255, 0.95) 0%, rgba(0, 130, 255, 0.7) 40%, rgba(0, 40, 180, 0.35) 70%, transparent 95%);
+  filter: blur(4px);
+  animation: thrusterPlasmaFlicker 0.08s infinite alternate ease-in-out;
+}
+
+/* Chamas principais de jato de plasma em forma de cone */
+.thruster-plasma-flame {
+  position: absolute;
+  top: 2%;
+  width: 100%;
+  height: 88%;
+  background: linear-gradient(180deg, #ffffff 0%, #70f7ff 20%, #00b4ff 60%, rgba(0, 80, 255, 0) 100%);
+  clip-path: polygon(15% 0%, 85% 0%, 58% 85%, 50% 100%, 42% 85%);
+  filter: drop-shadow(0 0 10px #00f0ff);
+  animation: thrusterFlamePulse 0.06s infinite alternate ease-in-out;
+}
+
+/* Núcleo de fusão ultra-quente branco puro */
+.thruster-core-beam {
+  position: absolute;
+  top: 0;
+  width: 36%;
+  height: 50%;
+  background: linear-gradient(180deg, #ffffff 0%, #c4f9ff 60%, rgba(0, 240, 255, 0) 100%);
+  clip-path: polygon(25% 0%, 75% 0%, 60% 90%, 50% 100%, 40% 90%);
+  filter: drop-shadow(0 0 7px #ffffff);
+  animation: thrusterCoreVibe 0.05s infinite alternate;
+}
+
+/* Disco de choque / Diamantes de compressão de aceleração espacial (Shock Diamonds) */
+.thruster-shock-diamond {
+  position: absolute;
+  top: 38%;
+  width: 22%;
+  height: 20%;
+  background: radial-gradient(circle, #ffffff 30%, #00f0ff 80%, transparent 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 7px #00f0ff;
+  animation: shockDiamondJitter 0.1s infinite alternate;
+}
+
+/* Modo Propulsão Ativa (quando a nave está a acelerar/navegar) */
+.ship-thruster-rig.thrusting {
+  opacity: 1;
+  transform: translateX(-50%) scaleY(1.28) scaleX(1.1);
+  transform-origin: top center;
+  filter: brightness(1.3);
+}
+
+/* ── DUAL THRUSTER CONFIG (H-M2) ── */
+/* Turbinas duplas mais finas, estreitas e focadas */
+.center-ship-wrap.dual-thrusters .ship-thruster-rig {
+  width: 9.5%; /* Mais fininha e proporcional a cada bocal */
+  height: 34%;
+}
+
+/* Em modo dual, o thruster principal fica no bocal direito */
+.center-ship-wrap.dual-thrusters .ship-thruster-rig:not(.ship-thruster-rig-2) {
+  left: 58%;
+  top: 83%;
+}
+/* Segundo thruster no bocal esquerdo */
+.ship-thruster-rig-2 {
+  position: absolute;
+  display: none; /* Oculto por defeito */
+  left: 40%;
+  top: 83%;
+  transform: translate3d(-50%, 0, 0);
+  width: 9.5%;
+  height: 34%;
+  z-index: 1;
+  pointer-events: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.3, 1), opacity 0.25s ease;
+  opacity: 0.7;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+/* Mostrar thruster-2 apenas em modo dual */
+.center-ship-wrap.dual-thrusters .ship-thruster-rig-2 {
+  display: flex;
+}
+
+/* Halo e nébula externa contida para não alargar visualmente */
+.center-ship-wrap.dual-thrusters .thruster-outer-glow {
+  width: 125%;
+  filter: blur(3px);
+}
+
+/* Estado thrusting mais pontiagudo e aerodinâmico para ambas as turbinas */
+.center-ship-wrap.dual-thrusters .ship-thruster-rig.thrusting {
+  opacity: 1;
+  transform: translateX(-50%) scaleY(1.35) scaleX(0.85);
+  transform-origin: top center;
+  filter: brightness(1.35);
+}
+.center-ship-wrap.dual-thrusters .ship-thruster-rig.thrusting .thruster-outer-glow {
+  filter: blur(4.5px);
+  background: radial-gradient(ellipse at 50% 15%, rgba(0, 240, 255, 0.95) 0%, rgba(0, 160, 255, 0.75) 45%, rgba(0, 60, 220, 0.35) 75%, transparent 100%);
+}
+.center-ship-wrap.dual-thrusters .ship-thruster-rig.thrusting .thruster-plasma-flame {
+  filter: drop-shadow(0 0 9px #00f0ff);
+}
+
+.ship-thruster-rig.thrusting .thruster-outer-glow {
+  filter: blur(7px);
+  background: radial-gradient(ellipse at 50% 15%, rgba(0, 240, 255, 1) 0%, rgba(0, 160, 255, 0.85) 45%, rgba(0, 60, 220, 0.45) 75%, transparent 100%);
+}
+
+.ship-thruster-rig.thrusting .thruster-plasma-flame {
+  filter: drop-shadow(0 0 18px #00f0ff);
+}
+
+/* ── QUAD THRUSTERS CONFIG (HARPI-T1: 2 Cyan Externos + 2 Laranja Internos) ── */
+.center-ship-wrap.quad-thrusters .ship-thruster-rig:not(.ship-thruster-orange) {
+  width: 7.5% !important;
+  height: 33% !important;
+}
+
+/* Bocal esquerdo exterior (Cyan) */
+.center-ship-wrap.quad-thrusters .ship-thruster-rig-2 {
+  left: 41% !important;
+  top: 83% !important;
+  display: flex !important;
+}
+
+/* Bocal direito exterior (Cyan) */
+.center-ship-wrap.quad-thrusters .ship-thruster-rig:not(.ship-thruster-rig-2):not(.ship-thruster-orange) {
+  left: 59% !important;
+  top: 83% !important;
+}
+
+/* Propulsores Internos Laranja (Metade do tamanho dos azuis e recuados/chegados para trás) */
+.ship-thruster-orange {
+  position: absolute;
+  display: none;
+  width: 6% !important;
+  height: 16.5% !important; /* Metade do tamanho dos propulsores azuis (33% -> 16.5%) */
+  z-index: 1;
+  pointer-events: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  transform-origin: top center;
+  /* Nave parada: encurtado quase ao mínimo */
+  transform: translate3d(-50%, 0, 0) scaleY(0.2) scaleX(0.7);
+  opacity: 0.6;
+  transition: transform 0.32s cubic-bezier(0.2, 0.85, 0.3, 1), opacity 0.28s ease, filter 0.28s ease;
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+}
+
+.center-ship-wrap.quad-thrusters .ship-thruster-orange {
+  display: flex !important;
+}
+
+/* Bocal central esquerdo (Laranja) - chegado para trás (90.5% vs 83% dos azuis) */
+.center-ship-wrap.quad-thrusters .ship-thruster-orange-1 {
+  left: 47.2% !important;
+  top: 90.5% !important;
+}
+
+/* Bocal central direito (Laranja) - chegado para trás (90.5% vs 83% dos azuis) */
+.center-ship-wrap.quad-thrusters .ship-thruster-orange-2 {
+  left: 52.8% !important;
+  top: 90.5% !important;
+}
+
+/* Halo e nébula externa de plasma laranja */
+.ship-thruster-orange .thruster-outer-glow {
+  background: radial-gradient(ellipse at 50% 15%, rgba(255, 140, 0, 0.95) 0%, rgba(255, 75, 0, 0.7) 40%, rgba(200, 20, 0, 0.35) 70%, transparent 95%);
+  filter: blur(3.5px);
+  transition: filter 0.28s ease, opacity 0.28s ease;
+}
+
+/* Nave parada: chama piloto bem encurtada e suave */
+.center-ship-wrap.quad-thrusters .ship-thruster-orange:not(.thrusting) .thruster-outer-glow {
+  opacity: 0.45;
+  filter: blur(2px);
+}
+.center-ship-wrap.quad-thrusters .ship-thruster-orange:not(.thrusting) .thruster-shock-diamond {
+  opacity: 0.3;
+  transform: scale(0.6);
+}
+
+/* Chamas principais de jato de plasma em tom laranja/dourado incandescente */
+.ship-thruster-orange .thruster-plasma-flame {
+  background: linear-gradient(180deg, #ffffff 0%, #ffe066 18%, #ff8800 55%, #cc3300 80%, rgba(180, 20, 0, 0) 100%);
+  filter: drop-shadow(0 0 10px #ff7700);
+}
+
+/* Núcleo de fusão ultra-quente branco/âmbar */
+.ship-thruster-orange .thruster-core-beam {
+  background: linear-gradient(180deg, #ffffff 0%, #fff4cc 60%, rgba(255, 180, 50, 0) 100%);
+  filter: drop-shadow(0 0 7px #ffffff);
+}
+
+/* Disco de compressão laranja */
+.ship-thruster-orange .thruster-shock-diamond {
+  background: radial-gradient(circle, #ffffff 30%, #ff8800 80%, transparent 100%);
+  box-shadow: 0 0 7px #ff8800;
+}
+
+/* Estado de propulsão ativa nos propulsores laranja (nave a andar: volta ao tamanho normal) */
+.center-ship-wrap.quad-thrusters .ship-thruster-orange.thrusting {
+  opacity: 1;
+  transform: translate3d(-50%, 0, 0) scaleY(1.0) scaleX(0.92);
+  transform-origin: top center;
+  filter: brightness(1.35);
+}
+
+.center-ship-wrap.quad-thrusters .ship-thruster-orange.thrusting .thruster-outer-glow {
+  opacity: 1;
+  filter: blur(5.5px);
+  background: radial-gradient(ellipse at 50% 15%, rgba(255, 160, 0, 1) 0%, rgba(255, 90, 0, 0.85) 45%, rgba(200, 30, 0, 0.45) 75%, transparent 100%);
+}
+
+.center-ship-wrap.quad-thrusters .ship-thruster-orange.thrusting .thruster-plasma-flame {
+  filter: drop-shadow(0 0 14px #ff6600);
+}
+
+@keyframes thrusterPlasmaFlicker {
+  0% { transform: scaleX(0.95) scaleY(0.97); opacity: 0.88; }
+  100% { transform: scaleX(1.05) scaleY(1.03); opacity: 1; }
+}
+
+@keyframes thrusterFlamePulse {
+  0% { transform: scaleX(0.94) scaleY(0.95); }
+  100% { transform: scaleX(1.06) scaleY(1.05); }
+}
+
+@keyframes thrusterCoreVibe {
+  0% { transform: scaleY(0.92); opacity: 0.92; }
+  100% { transform: scaleY(1.08); opacity: 1; }
+}
+
+@keyframes shockDiamondJitter {
+  0% { transform: translateY(-1px) scale(0.9); opacity: 0.75; }
+  100% { transform: translateY(1px) scale(1.15); opacity: 1; }
+}
+
+/* Marcador Sci-Fi ao Clicar na Coordenada de Destino */
+.ship-target-marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 32px;
+  height: 32px;
+  margin-left: -16px;
+  margin-top: -16px;
+  border: 1.5px solid rgba(0, 240, 255, 0.9);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 15;
+  opacity: 0;
+  transform: scale(1.6);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.7);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.ship-target-marker.active {
+  opacity: 1;
+  transform: scale(1);
+  animation: targetPulse 1.2s infinite alternate ease-in-out;
+}
+
+@keyframes targetPulse {
+  0% { transform: scale(0.9); box-shadow: 0 0 10px rgba(0, 240, 255, 0.4); border-color: rgba(0, 240, 255, 0.6); }
+  100% { transform: scale(1.15); box-shadow: 0 0 22px rgba(0, 240, 255, 0.9); border-color: #00f0ff; }
+}
+
+#starfield-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+}
+
+#starfield-canvas:active {
+  cursor: grabbing;
+}
+
+.game-hud-top {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.back-lobby-btn {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(0, 20, 35, 0.85);
+  border: 1.5px solid rgba(0, 240, 255, 0.5);
+  color: #00f0ff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  padding: 10px 22px;
+  border-radius: 4px;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+  transition: all 0.2s ease;
+  z-index: 30;
+}
+
+.back-lobby-btn:hover {
+  background: rgba(0, 240, 255, 0.2);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
+  border-color: #00f0ff;
+}
+
+.game-hud-coords {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 3px;
+  color: rgba(0, 240, 255, 0.65);
+  background: rgba(0, 10, 20, 0.7);
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+}
+

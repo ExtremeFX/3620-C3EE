@@ -1,0 +1,2774 @@
+/* ==========================================================================
+   HARPIA UNIVERSE - Space Flight Tactical HUD, Navigation, Drones & Radar
+   ========================================================================== */
+
+/* ================================================
+   SHIP NAVIGATION HUD (Bottom-Center Tactical Cockpit)
+   ================================================ */
+.ship-nav-hud {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 440px;
+  height: 250px;
+  max-width: 90vw;
+  z-index: 25;
+  pointer-events: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s;
+}
+
+body:not(.in-game) .ship-nav-hud,
+.station-hangar-overlay.active ~ #ship-nav-mount .ship-nav-hud,
+.ship-nav-hud.hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+/* ── Botões de Ação Táticos no HUD da Nave (APPROACH / WARP) ── */
+.nav-action-btns {
+  position: absolute;
+  left: calc(50% - 235px);
+  bottom: 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  pointer-events: auto;
+  user-select: none;
+  z-index: 30;
+}
+
+.nav-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px 5px 8px;
+  background: rgba(0, 10, 20, 0.70);
+  border: 1px solid rgba(0, 212, 255, 0.12);
+  border-radius: 3px;
+  cursor: not-allowed;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(0, 212, 255, 0.18);
+  transition: color 0.25s, border-color 0.25s, box-shadow 0.25s, background 0.25s;
+}
+
+.nav-btn-icon {
+  font-size: 11px;
+  opacity: 0.15;
+  transition: opacity 0.25s;
+}
+
+.nav-btn-label {
+  opacity: 0.18;
+  transition: opacity 0.25s;
+}
+
+/* Estado ACTIVO: alvo selecionado e acção disponível */
+.nav-action-btn.nav-btn-lit {
+  background: rgba(0, 20, 40, 0.85);
+  border-color: rgba(0, 212, 255, 0.55);
+  color: #00d4ff;
+  cursor: pointer;
+}
+
+.nav-action-btn.nav-btn-lit .nav-btn-icon {
+  opacity: 0.9;
+}
+
+.nav-action-btn.nav-btn-lit .nav-btn-label {
+  opacity: 1;
+}
+
+.nav-action-btn.nav-btn-lit:hover {
+  background: rgba(0, 212, 255, 0.18);
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.45);
+}
+
+/* Estado WARP pronto: pulso animado */
+.nav-btn-warp.nav-btn-warp-ready {
+  animation: navWarpBtnPulse 2s infinite ease-in-out;
+}
+
+@keyframes navWarpBtnPulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(0, 212, 255, 0.3); }
+  50%       { box-shadow: 0 0 14px rgba(0, 212, 255, 0.7); border-color: #00f0ff; }
+}
+
+/* Esconder quando fora do jogo */
+body:not(.in-game) .nav-action-btns,
+.ship-nav-hud.hidden .nav-action-btns {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ship-nav-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Tipografia Sci-Fi Orbitron nos Textos do HUD */
+.ship-nav-svg text {
+  font-family: 'Orbitron', -apple-system, BlinkMacSystemFont, sans-serif;
+  user-select: none;
+}
+
+.nav-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  fill: rgba(225, 245, 255, 0.85);
+  text-transform: uppercase;
+}
+
+.nav-percent {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  fill: #ffffff;
+}
+
+.nav-shield-pct {
+  fill: #ffffff;
+  filter: drop-shadow(0 0 8px #00d4ff);
+}
+
+.nav-hull-pct {
+  fill: #ffffff;
+  filter: drop-shadow(0 0 8px #ff6b00);
+}
+
+.nav-fraction {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.nav-shield-val {
+  fill: rgba(120, 210, 255, 0.75);
+}
+
+.nav-hull-val {
+  fill: rgba(255, 160, 100, 0.75);
+}
+
+.nav-mode-text {
+  font-size: 13px;
+  font-weight: 900;
+  fill: #ffffff;
+  filter: drop-shadow(0 0 6px #ffffff);
+}
+
+/* Indicador Digital de Velocidade (m/s) */
+.nav-speed-display {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  fill: #00f0ff;
+  filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.7));
+}
+
+.nav-speed-unit {
+  font-size: 13px;
+  font-weight: 700;
+  fill: rgba(140, 235, 255, 0.9);
+}
+
+/* Animacao dos Chevrons >>> de Propulsao */
+.nav-chevrons {
+  transition: opacity 0.25s ease;
+}
+
+/* ── NOTIFICAÇÃO FLUTUANTE POR CIMA DO HULL DA NAVE ── */
+.nav-hull-floating-slot {
+  position: absolute;
+  left: 78%; /* Alinhado ao mostrador de Hull (x=344 de 440px) */
+  top: 15px; /* Logo acima do arco/texto de Hull */
+  transform: translateX(-50%);
+  width: 140px;
+  height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.hull-float-notification {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Orbitron', monospace;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  animation: hullFloatUpAndFade 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hull-float-notification .float-plus {
+  color: #00f0ff;
+  font-size: 14px;
+  font-weight: 900;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.95), 0 2px 4px rgba(0, 0, 0, 0.9);
+}
+
+.hull-float-notification .float-ore {
+  color: #ffaa00;
+  font-size: 13px;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(255, 170, 0, 0.9), 0 2px 4px rgba(0, 0, 0, 0.9);
+}
+
+@keyframes hullFloatUpAndFade {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.8);
+    filter: blur(2px);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-5px) scale(1.08);
+    filter: blur(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-15px) scale(1);
+  }
+  75% {
+    opacity: 0.9;
+    transform: translateY(-38px) scale(0.98);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-55px) scale(0.9);
+    filter: blur(1px);
+  }
+}
+
+.nav-chevrons.active .chev-1 {
+  animation: navChevPulse 0.5s infinite 0s alternate;
+}
+.nav-chevrons.active .chev-2 {
+  animation: navChevPulse 0.5s infinite 0.15s alternate;
+}
+.nav-chevrons.active .chev-3 {
+  animation: navChevPulse 0.5s infinite 0.3s alternate;
+}
+
+.nav-chevrons:not(.active) path {
+  opacity: 0.3;
+  stroke: rgba(0, 160, 220, 0.5);
+}
+
+@keyframes navChevPulse {
+  0% {
+    opacity: 0.35;
+    stroke: #0099dd;
+  }
+  100% {
+    opacity: 1;
+    stroke: #00ffff;
+    filter: drop-shadow(0 0 6px #00ffff);
+  }
+}
+
+/* Chamas dos Propulsores da Silhueta */
+.nav-thruster-flames {
+  transform-origin: 0 14px;
+  transform: scaleY(0.35);
+  opacity: 0.35;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.3, 1), opacity 0.25s ease;
+}
+
+.nav-thruster-flames.firing {
+  opacity: 1;
+  transform: scaleY(1.35);
+  animation: navFlameJitter 0.12s infinite alternate ease-in-out;
+}
+
+@keyframes navFlameJitter {
+  0% {
+    transform: scaleY(1.15) scaleX(0.92);
+  }
+  100% {
+    transform: scaleY(1.45) scaleX(1.08);
+  }
+}
+
+.nav-ship-silhouette {
+  filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.55));
+}
+
+/* ================================================
+   DYNAMIC DUAL MINING LASERS LAYER (H-M1 to Asteroid)
+   ================================================ */
+.mining-lasers-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 19;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.laser-line-glow {
+  stroke: #ff2200;
+  stroke-width: 1.4px;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 1.5px rgba(255, 30, 0, 0.7));
+  opacity: 0.85;
+}
+
+.laser-line-core {
+  stroke: #ff9977;
+  stroke-width: 0.7px;
+  stroke-linecap: round;
+  opacity: 0.95;
+}
+
+/* Canvas de Partículas e Efeitos de Impacto no Asteroide */
+.mining-impacts-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 20;
+  pointer-events: none;
+}
+
+/* ================================================
+   TACTICAL MINING MODULE BUTTON (Right-Flank HUD)
+   ================================================ */
+.hud-module-rack-right {
+  position: absolute;
+  bottom: 24px;
+  left: calc(50% + 220px);
+  z-index: 30;
+  pointer-events: auto;
+  user-select: none;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s;
+}
+
+body:not(.in-game) .hud-module-rack-right,
+.station-hangar-overlay.active ~ #ship-nav-mount .hud-module-rack-right,
+.hud-module-rack-right.hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+.mining-module-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.mining-module-btn {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  background: radial-gradient(circle at center, rgba(35, 18, 5, 0.92) 0%, rgba(10, 5, 2, 0.98) 100%);
+  border: 1.8px solid #ff7700;
+  border-radius: 14px;
+  box-shadow: 0 0 12px rgba(255, 119, 0, 0.35), inset 0 0 10px rgba(255, 119, 0, 0.15);
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+}
+
+.mining-module-btn:hover {
+  border-color: #ffa500;
+  box-shadow: 0 0 18px rgba(255, 140, 0, 0.65), inset 0 0 12px rgba(255, 119, 0, 0.25);
+  transform: translateY(-2px);
+}
+
+.mining-module-btn:active {
+  transform: translateY(0);
+}
+
+/* Estado LIGADO (ON) */
+.mining-module-btn.active {
+  border-color: #ff8800;
+  box-shadow: 0 0 22px rgba(255, 119, 0, 0.85), 0 0 45px rgba(255, 80, 0, 0.35), inset 0 0 16px rgba(255, 119, 0, 0.4);
+  animation: miningBtnPulse 2.2s infinite ease-in-out;
+}
+
+@keyframes miningBtnPulse {
+  0% {
+    box-shadow: 0 0 14px rgba(255, 119, 0, 0.75), inset 0 0 12px rgba(255, 119, 0, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 26px rgba(255, 140, 0, 0.95), 0 0 45px rgba(255, 70, 0, 0.45), inset 0 0 20px rgba(255, 119, 0, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 14px rgba(255, 119, 0, 0.75), inset 0 0 12px rgba(255, 119, 0, 0.35);
+  }
+}
+
+/* Erro ao clicar fora de alcance / carga cheia */
+.mining-module-btn.error-pulse {
+  animation: miningErrorShake 0.45s ease;
+  border-color: #ff2200 !important;
+  box-shadow: 0 0 24px rgba(255, 30, 0, 0.95), inset 0 0 14px rgba(255, 30, 0, 0.5) !important;
+}
+
+@keyframes miningErrorShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+/* Cantos Táticos / Notches */
+.module-corner-bracket {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.module-corner-bracket.top-left {
+  top: 4px;
+  left: 4px;
+}
+
+.module-hotkey-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9.5px;
+  font-weight: 900;
+  color: #ff9900;
+  background: rgba(255, 119, 0, 0.18);
+  border: 1px solid rgba(255, 119, 0, 0.45);
+  border-radius: 3px;
+  padding: 1px 4px;
+  line-height: 12px;
+  text-shadow: 0 0 4px rgba(255, 119, 0, 0.8);
+}
+
+.mining-module-btn.active .module-hotkey-badge {
+  color: #ffffff;
+  background: #ff7700;
+  border-color: #ffffff;
+  text-shadow: 0 0 6px #ffffff;
+}
+
+.module-corner-bracket.top-right {
+  top: 5px;
+  right: 5px;
+}
+
+.module-pip {
+  display: block;
+  width: 3px;
+  height: 9px;
+  background: rgba(255, 119, 0, 0.7);
+  border-radius: 1px;
+}
+
+.module-corner-bracket.bottom-right {
+  bottom: 4px;
+  right: 4px;
+}
+
+.module-corner-cursor {
+  width: 8px;
+  height: 8px;
+  display: block;
+}
+
+/* Lente Circular Central */
+.module-lens-wrapper {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, rgba(12, 28, 44, 0.9) 0%, rgba(3, 8, 16, 0.98) 100%);
+  border: 1px solid rgba(255, 119, 0, 0.4);
+}
+
+.module-cycle-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+.cycle-track {
+  fill: none;
+  stroke: rgba(255, 119, 0, 0.18);
+  stroke-width: 2.2px;
+}
+
+.cycle-progress {
+  fill: none;
+  stroke: #ff7700;
+  stroke-width: 2.8px;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 4px #ff7700);
+  transition: stroke-dashoffset 0.12s linear;
+}
+
+.mining-module-btn.active .cycle-progress {
+  stroke: #ff8800;
+  filter: drop-shadow(0 0 6px #ff8800);
+}
+
+/* Ícone da Nave H-M1 */
+.module-ship-hologram {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-35deg);
+  transition: transform 0.3s ease, filter 0.3s ease;
+  pointer-events: none;
+}
+
+.module-ship-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.75)) brightness(1.15);
+}
+
+.mining-module-btn.active .module-ship-img {
+  filter: drop-shadow(0 0 8px rgba(255, 119, 0, 0.9)) brightness(1.3);
+}
+
+/* Efeito de pulso de laser no botão quando ativo */
+.module-laser-pulse {
+  display: none;
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 119, 0, 0.6);
+  pointer-events: none;
+}
+
+.mining-module-btn.active .module-laser-pulse {
+  display: block;
+  animation: laserPulseExpand 1.6s infinite ease-out;
+}
+
+@keyframes laserPulseExpand {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+/* Rodapé do Módulo com Título e Temporizador */
+.mining-module-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.mining-module-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #ff9900;
+  text-shadow: 0 0 8px rgba(255, 119, 0, 0.75);
+  white-space: nowrap;
+}
+
+.mining-module-timer {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: rgba(255, 190, 140, 0.75);
+}
+
+.mining-module-timer.active {
+  color: #ffffff;
+  text-shadow: 0 0 8px #ff7700;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 1200px) {
+  .hud-module-rack-right {
+    left: calc(50% + 195px);
+  }
+}
+
+@media (max-width: 860px) {
+  .hud-module-rack-right {
+    left: auto;
+    right: 18px;
+    bottom: 85px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MARKET STATION PANEL — EVE ONLINE STYLE (ORDER BOOK BROWSER)
+   ══════════════════════════════════════════════════════════════════ */
+.hangar-market-panel.eve-style-market {
+  position: absolute;
+  top: calc(50% - 25px);
+  left: 40px;
+  right: 520px;
+  width: auto;
+  max-width: none;
+  height: 700px;
+  max-height: calc(100vh - 160px);
+  transform: translateY(-50%) scale(0.97);
+  z-index: 12;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, visibility 0.42s;
+  background: rgba(1, 10, 20, 0.96);
+  border: 1.5px solid #00b4d8;
+  border-radius: 4px;
+  box-shadow: 0 0 30px rgba(0, 180, 216, 0.35), inset 0 0 20px rgba(0, 180, 216, 0.08);
+  filter: drop-shadow(0 0 25px rgba(0, 180, 216, 0.4));
+  overflow: hidden;
+}
+
+.hangar-market-panel.eve-style-market.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(-50%) scale(1);
+}
+
+.hangar-market-panel.eve-style-market.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-50%) scale(0.97);
+}
+
+/* ================================================
+   EVE ONLINE STYLE CONTEXT MENU (Right-Click Item)
+   ================================================ */
+.eve-context-menu {
+  position: fixed;
+  z-index: 9999;
+  background: linear-gradient(135deg, rgba(2, 14, 28, 0.98), rgba(1, 8, 16, 0.99));
+  border: 1px solid #00d4ff;
+  box-shadow: 0 0 25px rgba(0, 212, 255, 0.35), inset 0 0 10px rgba(0, 212, 255, 0.08);
+  border-radius: 4px;
+  min-width: 190px;
+  padding: 4px 0;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: contextMenuFadeIn 0.15s ease-out;
+}
+
+@keyframes contextMenuFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.eve-context-menu.hidden {
+  display: none !important;
+}
+
+.eve-context-header {
+  padding: 6px 12px 6px 12px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.25);
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eve-context-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #00f0ff;
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.5);
+  text-transform: uppercase;
+}
+
+.eve-context-item {
+  background: transparent;
+  border: none;
+  color: #e0f7fa;
+  font-family: 'Orbitron', 'Segoe UI', sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.eve-context-item:hover {
+  background: linear-gradient(90deg, rgba(0, 212, 255, 0.25) 0%, rgba(0, 150, 255, 0.1) 100%);
+  color: #ffffff;
+  padding-left: 17px;
+}
+
+.eve-ctx-icon {
+  font-size: 13px;
+}
+
+.market-panel-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.market-panel-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  padding: 16px 22px 14px 22px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* EVE Market Header */
+.eve-market-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 180, 216, 0.25);
+}
+
+.eve-market-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.eve-status-indicator {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: #00f0ff;
+  box-shadow: 0 0 10px #00f0ff;
+}
+
+.eve-market-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.eve-market-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16.5px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #00f0ff;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.eve-market-station-tag {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.eve-market-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.eve-market-wallet-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: rgba(0, 20, 38, 0.7);
+  border: 1px solid rgba(0, 180, 216, 0.35);
+  padding: 4px 12px;
+  border-radius: 3px;
+}
+
+.eve-wallet-label {
+  font-size: 8px;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.eve-wallet-amount {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffd700;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+.eve-create-order-btn {
+  background: linear-gradient(135deg, #0077b6 0%, #023e8a 100%);
+  border: 1px solid #00b4d8;
+  color: #ffffff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  padding: 8px 16px;
+  border-radius: 3px;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(0, 180, 216, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.eve-create-order-btn:hover {
+  background: linear-gradient(135deg, #0096c7 0%, #0077b6 100%);
+  box-shadow: 0 0 18px rgba(0, 180, 216, 0.6);
+  transform: translateY(-1px);
+}
+
+.eve-btn-icon {
+  font-size: 14px;
+  color: #00f0ff;
+  font-weight: 900;
+}
+
+/* Toolbar */
+.eve-market-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0 8px 0;
+}
+
+.eve-toolbar-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eve-toolbar-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.eve-orders-count-badge {
+  background: rgba(0, 180, 216, 0.15);
+  border: 1px solid rgba(0, 180, 216, 0.3);
+  color: #00f0ff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+.eve-refresh-btn {
+  background: transparent;
+  border: 1px solid rgba(0, 180, 216, 0.3);
+  color: #00b4d8;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9.5px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.eve-refresh-btn:hover {
+  background: rgba(0, 180, 216, 0.15);
+  color: #00f0ff;
+  border-color: #00f0ff;
+}
+
+/* EVE Online Market Table */
+.eve-table-container {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid rgba(0, 180, 216, 0.2);
+  background: rgba(1, 10, 20, 0.65);
+  margin-bottom: 10px;
+}
+
+.eve-market-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+}
+
+.eve-market-table thead tr {
+  background: rgba(0, 25, 45, 0.85);
+  border-bottom: 1px solid rgba(0, 180, 216, 0.4);
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.eve-market-table th {
+  padding: 8px 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #00b4d8;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.eve-market-table th.col-right,
+.eve-market-table td.col-right {
+  text-align: right;
+}
+
+.eve-market-table th.col-center,
+.eve-market-table td.col-center {
+  text-align: center;
+}
+
+.eve-market-table tbody tr.eve-table-row {
+  border-bottom: 1px solid rgba(0, 180, 216, 0.08);
+  transition: background 0.15s ease;
+}
+
+.eve-market-table tbody tr.eve-table-row:nth-child(even) {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.eve-market-table tbody tr.eve-table-row:hover {
+  background: rgba(0, 180, 216, 0.12);
+}
+
+.eve-market-table tbody tr.eve-row-owner {
+  background: rgba(0, 180, 216, 0.06);
+}
+
+.eve-market-table td {
+  padding: 7px 10px;
+  color: #d1e7f0;
+  white-space: nowrap;
+}
+
+.eve-col-icon {
+  width: 28px;
+  text-align: center;
+  padding: 4px 6px;
+}
+
+.eve-item-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.eve-col-name {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.eve-item-title {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.eve-item-sub {
+  font-size: 9px;
+  color: rgba(0, 180, 216, 0.7);
+  font-family: monospace;
+}
+
+.eve-col-qty {
+  font-family: monospace;
+  font-size: 12.5px;
+  color: #ffffff;
+}
+
+.eve-col-price {
+  font-family: monospace;
+  font-size: 12.5px;
+  color: #00ffaa;
+  font-weight: 600;
+}
+
+.eve-col-total {
+  font-family: monospace;
+  font-size: 12.5px;
+  color: #ffd700;
+}
+
+.eve-col-loc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.eve-col-seller {
+  font-size: 11px;
+}
+
+.eve-seller-self {
+  color: #00f0ff;
+  font-weight: 600;
+}
+
+.eve-seller-other {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.eve-badge-external {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 8.5px;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.eve-btn-cancel-order {
+  background: rgba(255, 68, 68, 0.15);
+  border: 1px solid rgba(255, 68, 68, 0.4);
+  color: #ff6666;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.eve-btn-cancel-order:hover {
+  background: rgba(255, 68, 68, 0.35);
+  color: #ffffff;
+  border-color: #ff4444;
+}
+
+.eve-btn-buy-order {
+  background: rgba(0, 255, 170, 0.15);
+  border: 1px solid rgba(0, 255, 170, 0.5);
+  color: #00ffaa;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 3px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(0, 255, 170, 0.2);
+  transition: all 0.2s ease;
+}
+
+.eve-btn-buy-order:hover {
+  background: rgba(0, 255, 170, 0.35);
+  color: #ffffff;
+  border-color: #00ffaa;
+  box-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
+  transform: translateY(-1px);
+}
+
+.eve-table-empty td {
+  padding: 38px 20px;
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: rgba(0, 180, 216, 0.6);
+}
+
+/* Footer Status */
+.eve-market-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 4px 0 4px;
+  flex-shrink: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  letter-spacing: 1px;
+  border-top: 1px solid rgba(0, 180, 216, 0.15);
+}
+
+.eve-footer-status {
+  color: rgba(0, 240, 255, 0.75);
+}
+
+.eve-footer-hint {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Modal Popover para Criar Ordem de Venda */
+.eve-sell-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 5, 12, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.25s ease;
+}
+
+.eve-sell-modal-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.eve-sell-modal-card {
+  width: 440px;
+  max-width: 90%;
+  background: #020e1a;
+  border: 1px solid #00b4d8;
+  border-radius: 4px;
+  box-shadow: 0 0 30px rgba(0, 180, 216, 0.4);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.eve-sell-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 30, 50, 0.85);
+  padding: 12px 18px;
+  border-bottom: 1px solid rgba(0, 180, 216, 0.3);
+}
+
+.eve-modal-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #00f0ff;
+}
+
+.eve-modal-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.eve-modal-close:hover {
+  color: #ff4444;
+}
+
+.eve-sell-modal-body {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.eve-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.eve-field-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.eve-select,
+.eve-input {
+  background: rgba(0, 15, 28, 0.9);
+  border: 1px solid rgba(0, 180, 216, 0.4);
+  color: #ffffff;
+  padding: 8px 10px;
+  border-radius: 3px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11.5px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.eve-select:focus,
+.eve-input:focus {
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.eve-select option {
+  background: #020e1a;
+  color: #ffffff;
+}
+
+.eve-field-hint {
+  font-size: 10px;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.8px;
+}
+
+.eve-qty-input-wrap {
+  display: flex;
+  gap: 6px;
+}
+
+.eve-qty-input-wrap .eve-input {
+  flex: 1;
+}
+
+.eve-qty-max-btn {
+  background: rgba(0, 180, 216, 0.2);
+  border: 1px solid #00b4d8;
+  color: #00f0ff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0 12px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.eve-qty-max-btn:hover {
+  background: rgba(0, 180, 216, 0.4);
+}
+
+.eve-order-summary-box {
+  background: rgba(0, 22, 38, 0.6);
+  border: 1px dashed rgba(0, 180, 216, 0.3);
+  padding: 10px 14px;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.eve-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.eve-summary-total {
+  font-size: 14px;
+  color: #00ffaa;
+  text-shadow: 0 0 8px rgba(0, 255, 170, 0.5);
+}
+
+.eve-summary-sub {
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.eve-confirm-sell-btn {
+  background: linear-gradient(135deg, #ff6600 0%, #cc4400 100%);
+  border: 1px solid #ff9933;
+  color: #ffffff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  padding: 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(255, 102, 0, 0.4);
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+.eve-confirm-sell-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ff7711 0%, #ee5500 100%);
+  box-shadow: 0 0 22px rgba(255, 102, 0, 0.7);
+  transform: translateY(-1px);
+}
+
+.eve-confirm-sell-btn:disabled {
+  background: rgba(60, 60, 60, 0.4);
+  border-color: rgba(100, 100, 100, 0.3);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+
+
+/* ════════════════════════════════════════════════════════════
+   DRONES HANGAR PANEL
+   Posicionada na área central-superior da janela panorâmica.
+   Exclusivamente para drones (mining_drone). Visível apenas
+   na tab MAIN HANGAR. Oculta nas tabs ASSEMBLY e MARKET.
+   ════════════════════════════════════════════════════════════ */
+
+#station-drones-hangar-mount {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 12;
+}
+
+.drones-hangar-panel {
+  position: absolute;
+  top: calc(50% - 88px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 440px;
+  height: 285px;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  z-index: 12;
+  filter: drop-shadow(0 0 18px rgba(0, 170, 255, 0.5));
+  will-change: transform, opacity;
+  animation: dronesPanelPulse 4s ease-in-out infinite alternate;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.drones-hangar-panel.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  display: none;
+}
+
+@keyframes dronesPanelPulse {
+  0% { filter: drop-shadow(0 0 12px rgba(0, 160, 255, 0.35)); }
+  100% { filter: drop-shadow(0 0 28px rgba(0, 240, 255, 0.6)); }
+}
+
+/* SVG Background layer */
+.drones-panel-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.45));
+}
+
+.drones-panel-bg {
+  fill: #000000 !important;
+  fill-opacity: 0.87 !important;
+}
+
+/* Content layer */
+.drones-panel-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 16px 24px 14px 24px;
+}
+
+/* Panel Header */
+.drones-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drones-tag-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Inner slot / drop zone */
+.drones-panel-inner-slot {
+  flex: 1;
+  margin-top: 10px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid transparent;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.drones-panel-inner-slot.drag-over,
+.drones-panel-inner-slot.awaiting-drop {
+  border-color: rgba(0, 212, 255, 0.6);
+  background: rgba(0, 80, 120, 0.18);
+  box-shadow: inset 0 0 20px rgba(0, 180, 255, 0.12);
+}
+
+.drones-panel-inner-slot.awaiting-drop {
+  border-color: rgba(0, 212, 255, 0.3);
+  border-style: dashed;
+  animation: droneDropReady 1.5s ease-in-out infinite;
+}
+
+.drones-panel-inner-slot.drag-over {
+  border-color: #00f0ff;
+  animation: none;
+}
+
+@keyframes droneDropReady {
+  0%, 100% { box-shadow: inset 0 0 12px rgba(0, 180, 255, 0.08); }
+  50% { box-shadow: inset 0 0 22px rgba(0, 240, 255, 0.25); }
+}
+
+/* Drone items container */
+.drones-items-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-content: flex-start;
+}
+
+/* Drone item card – reuses storage-item-card styles; only customise what differs */
+.drone-item-card {
+  width: 88px;
+}
+
+.drone-square {
+  border: 1.5px solid rgba(0, 170, 255, 0.5) !important;
+  background: rgba(0, 30, 60, 0.75) !important;
+}
+
+.drone-square:hover {
+  border-color: #00f0ff !important;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.45);
+}
+
+/* Drone-specific empty state */
+.drones-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  min-height: 90px;
+  padding: 12px;
+  text-align: center;
+}
+
+.drones-empty-state.no-bay {
+  border: 1px dashed rgba(255, 180, 0, 0.35);
+  border-radius: 4px;
+  background: rgba(40, 20, 0, 0.25);
+}
+
+.drones-empty-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.drones-empty-icon.warning-pulse {
+  animation: warningPulse 2s ease-in-out infinite;
+}
+
+@keyframes warningPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.drones-empty-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: rgba(0, 212, 255, 0.85);
+}
+
+.drones-empty-state.no-bay .drones-empty-title {
+  color: rgba(255, 180, 0, 0.9);
+}
+
+.drones-empty-hint {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.5;
+}
+
+.drones-empty-hint strong {
+  color: rgba(0, 200, 255, 0.75);
+}
+
+/* Footer with unload button */
+.drones-panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.drones-unload-btn {
+  background: rgba(0, 50, 80, 0.8);
+  border: 1px solid rgba(0, 180, 216, 0.5);
+  color: rgba(0, 212, 255, 0.85);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 6px 16px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  pointer-events: auto;
+}
+
+.drones-unload-btn:hover:not(:disabled) {
+  background: rgba(0, 80, 120, 0.9);
+  border-color: #00f0ff;
+  color: #00f0ff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+}
+
+.drones-unload-btn:disabled {
+  border-color: rgba(60, 80, 100, 0.4);
+  color: rgba(100, 130, 150, 0.4);
+  cursor: not-allowed;
+  background: rgba(10, 20, 30, 0.5);
+}
+
+/* Drone bay capacity progress bar overrides */
+.drones-cap-val {
+  color: #00f0ff;
+}
+
+.drones-cap-fill {
+  background: linear-gradient(90deg, #00d4ff 0%, #00ffaa 100%);
+  transition: width 0.5s ease;
+}
+
+/* ════════════════════════════════════════════════════════════
+   GROK DRONES - ESPAÇO E SISTEMA DE MINERAÇÃO AUTÓNOMO
+   - Feixe único branco com tom de azul (White with light blue glow)
+   - Ciclo de mineração de 20s por unidade
+   ════════════════════════════════════════════════════════════ */
+
+/* Camada de Drones no Espaço */
+.drones-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 18;
+  overflow: visible;
+}
+
+/* Entidade Grok no Espaço */
+.grok-drone-entity {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  will-change: transform;
+  z-index: 18;
+}
+
+.grok-drone-hull {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.65));
+}
+
+.grok-drone-sprite {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.grok-drone-thruster-glow {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2.5px;
+  height: 8px;
+  background: linear-gradient(180deg, #ffffff 0%, #a5f3fc 30%, #00d4ff 70%, transparent 100%);
+  border-radius: 1px 1px 2px 2px;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 2px rgba(0, 212, 255, 0.85));
+  animation: grokThrusterFlicker 0.08s infinite alternate ease-in-out;
+  pointer-events: none;
+}
+
+@keyframes grokThrusterFlicker {
+  0% { transform: translateX(-50%) scaleY(0.85); opacity: 0.75; }
+  100% { transform: translateX(-50%) scaleY(1.15); opacity: 0.95; }
+}
+
+/* ── Feixe Único do Drone Grok (Branco com Tom de Azul) ── */
+.grok-laser-glow {
+  stroke: rgba(140, 225, 255, 0.85);
+  stroke-width: 1.8px;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px rgba(100, 210, 255, 0.95));
+  opacity: 0.9;
+}
+
+.grok-laser-core {
+  stroke: #ffffff;
+  stroke-width: 0.85px;
+  stroke-linecap: round;
+  opacity: 0.98;
+}
+
+/* ── HUD Card dos Drones Grok (Flanco Direito da HUD) ── */
+.grok-drones-hud-card {
+  margin-top: 10px;
+  width: 130px;
+  background: rgba(0, 15, 30, 0.85);
+  border: 1px solid rgba(0, 212, 255, 0.45);
+  border-radius: 4px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 0 14px rgba(0, 200, 255, 0.2);
+  pointer-events: auto;
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease;
+}
+
+.grok-drones-hud-card:hover {
+  border-color: #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+}
+
+.grok-drones-hud-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.grok-drones-hud-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.grok-hud-icon {
+  font-size: 11px;
+}
+
+.grok-hud-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #00f0ff;
+}
+
+.grok-drones-hud-count {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 0 6px rgba(0, 255, 200, 0.6);
+}
+
+.grok-drones-hud-meta {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 7.5px;
+  color: rgba(180, 225, 255, 0.7);
+  letter-spacing: 0.5px;
+}
+
+.grok-cycle-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(0, 30, 60, 0.8);
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 180, 255, 0.3);
+  margin-top: 2px;
+}
+
+.grok-cycle-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffffff 0%, #70d6ff 100%);
+  box-shadow: 0 0 6px rgba(180, 235, 255, 0.8);
+  transition: width 0.1s linear;
+}
+
+/* ================================================
+   GROK DRONES MODULE BUTTON (cyan / blue theme)
+   ================================================ */
+.drone-module-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Seletor de Modo da Esquadra (FOCUS vs SPLIT • Atalho 3) ── */
+.drone-squad-mode-pill {
+  position: absolute;
+  top: -11px;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4.5px;
+  background: rgba(3, 14, 25, 0.94);
+  border: 1.2px solid rgba(0, 212, 255, 0.6);
+  border-radius: 10px;
+  padding: 1.5px 6px;
+  cursor: pointer;
+  z-index: 25;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+  outline: none;
+}
+
+.drone-squad-mode-pill:hover {
+  border-color: #00f0ff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.65);
+  transform: translateY(-1px);
+}
+
+.drone-squad-mode-pill:active {
+  transform: translateY(0);
+}
+
+.drone-squad-mode-pill .drone-mode-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #00d4ff;
+  box-shadow: 0 0 5px #00d4ff;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.drone-squad-mode-pill .drone-mode-label {
+  font-family: 'Orbitron', monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #70d4ff;
+  transition: color 0.25s ease;
+}
+
+.drone-squad-mode-pill .drone-mode-key {
+  font-family: 'Orbitron', monospace;
+  font-size: 6.5px;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0 2.5px;
+  border-radius: 2px;
+  border: 0.5px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Modo SPLIT (Esmeralda / Verde Elétrico) */
+.drone-squad-mode-pill.split-active {
+  border-color: rgba(0, 255, 170, 0.85);
+  box-shadow: 0 0 10px rgba(0, 255, 170, 0.45);
+}
+
+.drone-squad-mode-pill.split-active .drone-mode-dot {
+  background: #00ffaa;
+  box-shadow: 0 0 8px #00ffaa;
+}
+
+.drone-squad-mode-pill.split-active .drone-mode-label {
+  color: #00ffaa;
+}
+
+.drone-module-btn {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  background: radial-gradient(circle at center, rgba(0,25,45,0.92) 0%, rgba(0,5,15,0.98) 100%);
+  border: 1.8px solid #00d4ff;
+  border-radius: 14px;
+  box-shadow: 0 0 12px rgba(0,212,255,0.35), inset 0 0 10px rgba(0,180,255,0.15);
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+}
+
+.drone-module-btn:hover {
+  border-color: #00f0ff;
+  box-shadow: 0 0 18px rgba(0,240,255,0.65), inset 0 0 12px rgba(0,212,255,0.25);
+  transform: translateY(-2px);
+}
+
+.drone-module-btn:active { transform: translateY(0); }
+
+.drone-module-btn.active {
+  border-color: #00f0ff;
+  box-shadow: 0 0 22px rgba(0,240,255,0.85), 0 0 45px rgba(0,180,255,0.35), inset 0 0 16px rgba(0,212,255,0.4);
+  animation: droneBtnPulse 2.2s infinite ease-in-out;
+}
+
+@keyframes droneBtnPulse {
+  0%   { box-shadow: 0 0 14px rgba(0,212,255,0.75), inset 0 0 12px rgba(0,212,255,0.35); }
+  50%  { box-shadow: 0 0 26px rgba(0,240,255,0.95), 0 0 45px rgba(0,180,255,0.45), inset 0 0 20px rgba(0,212,255,0.55); }
+  100% { box-shadow: 0 0 14px rgba(0,212,255,0.75), inset 0 0 12px rgba(0,212,255,0.35); }
+}
+
+.drone-module-btn.error-pulse {
+  animation: miningErrorShake 0.45s ease;
+  border-color: #ff2200 !important;
+  box-shadow: 0 0 24px rgba(255,30,0,0.95), inset 0 0 14px rgba(255,30,0,0.5) !important;
+}
+
+.drone-hotkey-badge {
+  color: #00d4ff !important;
+  text-shadow: 0 0 6px rgba(0,212,255,0.8) !important;
+}
+
+.drone-pip {
+  background: #00d4ff !important;
+  box-shadow: 0 0 4px #00d4ff !important;
+}
+
+/* Drone SVG cycle ring — cyan */
+.drone-cycle-progress {
+  stroke: #00d4ff;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  fill: none;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.drone-hologram { position: relative; }
+
+.drone-img {
+  width: 38px !important;
+  height: 38px !important;
+  object-fit: contain;
+  filter: drop-shadow(0 0 4px rgba(0,212,255,0.6));
+}
+
+/* Expanding ring pulse when drones are active */
+.drone-pulse {
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0,212,255,0.6);
+  pointer-events: none;
+  display: none;
+}
+
+.drone-module-btn.active .drone-pulse {
+  display: block;
+  animation: laserPulseExpand 1.6s infinite ease-out;
+}
+
+.drone-module-timer {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: rgba(0,212,255,0.75);
+}
+
+.drone-module-timer.active {
+  color: #00f0ff;
+  text-shadow: 0 0 8px #00d4ff;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   1. TACTICAL OVERVIEW PANEL (EVE ONLINE STYLE)
+   ═══════════════════════════════════════════════════════════════════════ */
+.tactical-overview-panel {
+  position: fixed;
+  top: 72px;
+  right: 18px;
+  width: 320px;
+  max-height: 480px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(4, 12, 22, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), inset 0 0 16px rgba(0, 240, 255, 0.05);
+  font-family: 'Orbitron', 'Share Tech Mono', monospace;
+  z-index: 1200;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.tactical-overview-panel.collapsed .overview-body {
+  display: none !important;
+}
+
+.overview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.12), rgba(0, 40, 70, 0.2));
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  cursor: pointer;
+}
+
+.overview-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.overview-radar-icon {
+  color: #00f0ff;
+  font-size: 14px;
+  animation: radarPulse 2s infinite ease-in-out;
+}
+
+@keyframes radarPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; text-shadow: 0 0 8px #00f0ff; }
+}
+
+.overview-title {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #00f0ff;
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.5);
+}
+
+.overview-count {
+  font-size: 9px;
+  padding: 1px 5px;
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 3px;
+  color: #a8eeff;
+}
+
+.overview-toggle-btn {
+  background: transparent;
+  border: none;
+  color: rgba(0, 240, 255, 0.7);
+  font-size: 10px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.overview-toggle-btn:hover {
+  color: #fff;
+}
+
+.overview-body {
+  display: flex;
+  flex-direction: column;
+  max-height: 310px;
+  overflow: hidden;
+}
+
+.overview-table-head {
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  background: rgba(0, 15, 30, 0.6);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: rgba(0, 240, 255, 0.5);
+}
+
+.overview-list {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 280px;
+}
+
+.overview-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.overview-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 240, 255, 0.3);
+  border-radius: 2px;
+}
+
+.col-icon { width: 24px; text-align: center; flex-shrink: 0; }
+.col-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 6px; }
+.col-dist { width: 68px; text-align: right; flex-shrink: 0; font-family: monospace; }
+.col-units { width: 62px; text-align: right; flex-shrink: 0; font-size: 9px; }
+
+.overview-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  font-size: 9.5px;
+  color: #d1f2fb;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
+}
+
+.overview-row * {
+  pointer-events: none;
+}
+
+.overview-row:hover {
+  background: rgba(0, 240, 255, 0.1);
+}
+
+.overview-row.selected {
+  background: rgba(0, 240, 255, 0.22);
+  border-left: 3px solid #00f0ff;
+  color: #ffffff;
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.6);
+}
+
+.ov-icon-img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.ov-units-text.depleted {
+  color: #ff4757;
+  font-weight: 700;
+}
+
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   2. OFF-SCREEN RADAR EDGE MARKERS
+   ═══════════════════════════════════════════════════════════════════════ */
+.offscreen-radar-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1080;
+}
+
+.radar-edge-marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: auto;
+  cursor: pointer;
+  transform: translate3d(-50%, -50%, 0);
+  transition: opacity 0.15s;
+  user-select: none;
+}
+
+.radar-edge-marker:hover {
+  transform: translate3d(-50%, -50%, 0) scale(1.08);
+}
+
+.marker-arrow {
+  color: #00f0ff;
+  font-size: 11px;
+  text-shadow: 0 0 6px #00f0ff;
+  transform-origin: center center;
+}
+
+.marker-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px;
+  background: rgba(3, 10, 20, 0.92);
+  border: 1px solid #00f0ff;
+  border-radius: 3px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+}
+
+.marker-icon {
+  font-size: 10px;
+}
+
+.marker-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.marker-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.marker-dist {
+  font-family: monospace;
+  font-size: 8px;
+  font-weight: 700;
+  color: #ffd277;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   4. WARP DRIVE VISUAL EFFECTS ON SHIP
+   ═══════════════════════════════════════════════════════════════════════ */
+.center-ship-wrap.in-warp {
+  filter: drop-shadow(0 0 25px rgba(0, 240, 255, 0.85)) drop-shadow(0 0 60px rgba(0, 240, 255, 0.5));
+}
+
+.center-ship-wrap.in-warp .ship-thruster-rig {
+  transform: scaleY(2.2);
+  filter: brightness(2.0);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   5. GALAXY MAP HUD BUTTON & OVERLAY (TECLA 'M')
+   ═══════════════════════════════════════════════════════════════════════ */
+.game-hud-top {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 600;
+}
+
+.galaxy-map-hud-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #00f0ff;
+  background: rgba(0, 30, 50, 0.75);
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 240, 255, 0.45);
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+  transition: all 0.2s ease;
+  pointer-events: auto;
+}
+
+.galaxy-map-hud-btn:hover {
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.6);
+  border-color: #00f0ff;
+  color: #ffffff;
+}
+
+.galaxy-map-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2500;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at center, #020b18 0%, #00040a 100%);
+  user-select: none;
+  contain: strict;
+  animation: galaxyMapFadeIn 0.25s ease-out;
+}
+
+@keyframes galaxyMapFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.galaxy-map-header {
+  height: 56px;
+  background: rgba(0, 15, 30, 0.88);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 10;
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+
+.galaxy-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.galaxy-radar-glyph {
+  font-size: 22px;
+  color: #00f0ff;
+  text-shadow: 0 0 12px #00f0ff;
+  animation: radarPulse 2.5s infinite;
+}
+
+.galaxy-title-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.galaxy-main-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #00f0ff;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+.galaxy-sub-title {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: rgba(0, 240, 255, 0.5);
+}
+
+.galaxy-filters-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 20, 40, 0.6);
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 240, 255, 0.18);
+}
+
+.filter-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: rgba(0, 240, 255, 0.6);
+  margin-right: 4px;
+}
+
+.filter-btn {
+  background: rgba(0, 30, 60, 0.6);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  color: #a8eeff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-btn:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: #00f0ff;
+  color: #fff;
+}
+
+.filter-btn.active {
+  background: rgba(0, 240, 255, 0.35);
+  border-color: #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+.filter-ferrox.active { border-color: #ffaa00; color: #ffaa00; }
+.filter-crynex.active { border-color: #a855f7; color: #d8b4fe; }
+.filter-varelium.active { border-color: #00ffaa; color: #00ffaa; }
+
+.galaxy-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.galaxy-btn-recenter {
+  background: rgba(0, 40, 70, 0.7);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: #00f0ff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.galaxy-btn-recenter:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.galaxy-btn-close {
+  background: rgba(255, 51, 68, 0.15);
+  border: 1px solid rgba(255, 51, 68, 0.45);
+  color: #ff6677;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.galaxy-btn-close:hover {
+  background: rgba(255, 51, 68, 0.35);
+  border-color: #ff3344;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(255, 51, 68, 0.6);
+}
+
+.galaxy-map-canvas {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.galaxy-map-canvas:active {
+  cursor: grabbing;
+}
+
+body.galaxy-map-active .tactical-overview-panel,
+body.galaxy-map-active .drone-squad-bar,
+body.galaxy-map-active .offscreen-radar-layer,
+body.galaxy-map-active .ship-nav-hud,
+body.galaxy-map-active .game-hud-top,
+body.galaxy-map-active #space-ore-mount {
+  display: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   6. INTERSTELLAR WARP HUD BANNER
+   ═══════════════════════════════════════════════════════════════════════ */
+.interstellar-warp-banner {
+  position: fixed;
+  bottom: 250px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  background: rgba(3, 15, 30, 0.92);
+  border: 1px solid #00f0ff;
+  border-radius: 8px;
+  padding: 10px 18px;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.4), inset 0 0 15px rgba(0, 240, 255, 0.15);
+  backdrop-filter: blur(14px);
+  z-index: 1500;
+  pointer-events: auto;
+  user-select: none;
+  animation: warpBannerSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes warpBannerSlideUp {
+  from { opacity: 0; transform: translate(-50%, 15px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.warp-banner-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.warp-banner-icon {
+  font-size: 20px;
+  color: #00f0ff;
+  animation: radarPulse 1.8s infinite ease-in-out;
+}
+
+.warp-banner-texts {
+  display: flex;
+  flex-direction: column;
+}
+
+.warp-banner-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: rgba(0, 240, 255, 0.7);
+}
+
+.warp-banner-target {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+}
+
+.warp-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-engage-interstellar-warp {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.35), rgba(0, 120, 255, 0.3));
+  border: 1px solid #00f0ff;
+  color: #ffffff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  padding: 8px 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+  transition: all 0.2s ease;
+}
+
+.btn-engage-interstellar-warp:hover {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.6), rgba(0, 120, 255, 0.45));
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.8);
+  transform: translateY(-1px);
+}
+
+.btn-engage-interstellar-warp:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-cancel-interstellar-route {
+  background: rgba(255, 51, 68, 0.15);
+  border: 1px solid rgba(255, 51, 68, 0.4);
+  color: #ff6677;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-cancel-interstellar-route:hover {
+  background: rgba(255, 51, 68, 0.35);
+  border-color: #ff3344;
+  color: #ffffff;
+}
+
+.galaxy-map-legend {
+  position: absolute;
+  bottom: 38px;
+  left: 24px;
+  background: rgba(0, 15, 30, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 6px;
+  padding: 8px 14px;
+  display: flex;
+  gap: 16px;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.leg-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.leg-dot.high { background: #00f0ff; box-shadow: 0 0 6px #00f0ff; }
+.leg-dot.low { background: #ffaa00; box-shadow: 0 0 6px #ffaa00; }
+.leg-dot.null { background: #ff3344; box-shadow: 0 0 6px #ff3344; }
+
+.galaxy-map-help {
+  position: absolute;
+  bottom: 12px;
+  left: 24px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: rgba(0, 240, 255, 0.45);
+  pointer-events: none;
+}
+
+/* Painel Lateral de Detalhes */
+.galaxy-details-panel {
+  position: absolute;
+  top: 72px;
+  right: 24px;
+  width: 320px;
+  max-height: calc(100vh - 100px);
+  background: rgba(0, 15, 30, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 240, 255, 0.15);
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+  z-index: 20;
+}
+
+.details-header {
+  padding: 14px 16px;
+  background: rgba(0, 30, 60, 0.6);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.details-sys-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #ffffff;
+}
+
+.details-sec-badge {
+  font-family: monospace;
+  font-size: 9px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.details-sec-badge.sec-high {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid #00f0ff;
+  color: #00f0ff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+}
+
+.details-sec-badge.sec-low {
+  background: rgba(255, 170, 0, 0.15);
+  border: 1px solid #ffaa00;
+  color: #ffaa00;
+  box-shadow: 0 0 8px rgba(255, 170, 0, 0.3);
+}
+
+.details-sec-badge.sec-null {
+  background: rgba(255, 51, 68, 0.15);
+  border: 1px solid #ff3344;
+  color: #ff3344;
+  box-shadow: 0 0 8px rgba(255, 51, 68, 0.3);
+}
+
+.details-body {
+  padding: 14px 16px;
+  overflow-y: auto;
+  font-size: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.details-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.d-label {
+  color: rgba(0, 240, 255, 0.6);
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+}
+
+.d-val {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.d-val.highlight {
+  color: #00ffaa;
+  font-weight: 900;
+}
+
+.d-val.remote {
+  color: #ffd277;
+}
+
+.details-section-divider {
+  height: 1px;
+  background: rgba(0, 240, 255, 0.12);
+  margin: 4px 0;
+}
+
+.details-section-title {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: rgba(0, 240, 255, 0.8);
+}
+
+.details-minerals-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mineral-badge {
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.badge-ferrox {
+  background: rgba(255, 170, 0, 0.15);
+  border: 1px solid rgba(255, 170, 0, 0.4);
+  color: #ffaa00;
+}
+
+.badge-crynex {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #d8b4fe;
+}
+
+.badge-varelium {
+  background: rgba(0, 255, 170, 0.15);
+  border: 1px solid rgba(0, 255, 170, 0.4);
+  color: #00ffaa;
+}
+
+.details-stations-text {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+  font-size: 9.5px;
+}
+
+.details-description {
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.5;
+  font-size: 9px;
+  font-style: italic;
+  background: rgba(0, 20, 40, 0.4);
+  padding: 8px;
+  border-radius: 4px;
+  border-left: 2px solid rgba(0, 240, 255, 0.4);
+}
+
+.details-actions {
+  padding: 12px 16px;
+  background: rgba(0, 20, 40, 0.6);
+  border-top: 1px solid rgba(0, 240, 255, 0.2);
+}
+
+.btn-set-destination {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(0, 120, 255, 0.2));
+  border: 1px solid #00f0ff;
+  color: #ffffff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-set-destination:hover {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.45), rgba(0, 120, 255, 0.35));
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+  transform: translateY(-1px);
+}

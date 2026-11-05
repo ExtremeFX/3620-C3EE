@@ -1,0 +1,232 @@
+/* ==========================================================================
+   HARPIA UNIVERSE - Core Base & Global Environment Styles
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Proteção global contra seleção e drag */
+img, video, canvas {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Re-ativar pointer-events em elementos interativos */
+input, button, a, form, label, [onclick] {
+  pointer-events: auto;
+}
+
+body {
+  font-family: 'Orbitron', 'Segoe UI', sans-serif;
+  background: #000;
+  color: #fff;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── NOVO AMBIENTE DE JOGO (STARFIELD PARALLAX) ── */
+.game-world {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 500;
+  display: none;
+  background: #01040a;
+  overflow: hidden;
+  contain: strict; /* Isola layout e pintura para 100% aceleração em GPU */
+  transform: translateZ(0);
+  will-change: transform;
+  perspective: 900px;
+  perspective-origin: center center;
+}
+
+.game-world.active {
+  display: block;
+}
+
+/* Quando no jogo, esconde completamente os elementos de fundo do lobby para libertar 100% de CPU */
+body.in-game .bg,
+body.in-game .logo,
+body.in-game .banner-right,
+body.in-game .daily-reward-box,
+body.in-game .play-game-wrap,
+body.in-game .auth-panel {
+  display: none !important;
+}
+
+/* Canvas acelerado por GPU */
+#starfield-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  transform: translateZ(0);
+  will-change: contents;
+}
+
+/* ── PLANETA CELESTIAL AO LADO DIREITO DA TELA (Background Transparente) ── */
+.celestial-planet-wrap {
+  position: absolute;
+  top: 50%;
+  right: -80px;
+  transform: translateY(-50%);
+  width: min(920px, 58vw);
+  height: min(920px, 58vw);
+  z-index: 8;
+  pointer-events: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(-14px -14px 35px rgba(110, 190, 255, 0.45)) drop-shadow(0 0 85px rgba(220, 55, 20, 0.28));
+  will-change: transform, width, height;
+}
+
+.celestial-planet-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+  background: transparent;
+}
+
+/* Estação Principal no Espaço (Renderizada via GPU) */
+.main-station-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate3d(-50%, -50%, 0);
+  z-index: 20;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2500px; /* Largura inicial — controlada pelo JS via starfield zoom */
+  will-change: transform, width;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.main-station-vid {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: transparent;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 35px rgba(0, 240, 255, 0.45));
+  transform: translateZ(0);
+  will-change: filter;
+  contain: paint;
+}
+
+/* Nave Mineradora H-M1 no Centro da Tela (Renderizada via GPU) */
+.center-ship-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate3d(-50%, -50%, 0);
+  z-index: 25;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 90px;
+  will-change: transform, width, filter;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.center-ship-vid {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: transparent;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 25px rgba(0, 240, 255, 0.5));
+  position: relative;
+  z-index: 2;
+  transform: translateZ(0);
+  contain: paint;
+}
+
+.asteroid-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate3d(-50%, -50%, 0);
+  z-index: 18;
+  pointer-events: auto;
+  cursor: crosshair;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 320px;
+  height: 320px;
+  will-change: transform, width, height, opacity;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.asteroid-body {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  will-change: transform;
+}
+
+.asteroid-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 0 24px rgba(0, 212, 255, 0.45));
+  pointer-events: none;
+  user-select: none;
+  transition: filter 0.4s ease;
+}
+
+/* Indicador de Unidades no Centro do Asteroide apenas ao passar o rato (Hover) - Pequeno e Discreto */
+.asteroid-hover-units {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  color: #aae8f8;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
+  background: rgba(3, 8, 16, 0.65);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  padding: 2px 7px;
+  border-radius: 3px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.2s ease;
+  z-index: 25;
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1.2;
+}
+
+.asteroid-wrap:hover .asteroid-hover-units {
+  opacity: 1;
+  visibility: visible;
+}
+

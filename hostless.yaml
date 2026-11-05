@@ -1,0 +1,5 @@
+build:
+  command: "npm install"
+system: auto
+min_cpu: 0.5
+max_cpu: 2
