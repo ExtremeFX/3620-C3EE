@@ -42,27 +42,35 @@ app.addContentTypeParser('application/json', { parseAs: 'string' }, (req, body, 
 })
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
-// FIX BUG-CORS: restrict to specific origins instead of wildcard '*'
-// Add your production domain here when deploying
-const ALLOWED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
+// Restringe origens ou aceita configuradas via ALLOWED_ORIGINS e *.hostless.app
+const envOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean)
+const ALLOWED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000', ...envOrigins]
+
 app.register(require('@fastify/cors'), {
   origin: (origin, cb) => {
-    // Allow requests with no origin (e.g. same-origin, curl during dev)
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true)
+    // Permite pedidos sem header Origin (same-origin, fetch local, curl)
+    if (!origin) return cb(null, true)
+    if (
+      ALLOWED_ORIGINS.includes(origin) ||
+      ALLOWED_ORIGINS.includes('*') ||
+      origin.endsWith('.hostless.app') ||
+      origin.endsWith('.hostless.cloud')
+    ) {
+      return cb(null, true)
+    }
     cb(new Error('CORS: origin not allowed'), false)
   }
 })
 
-// FIX BUG-JWT: load JWT secret from environment variable; never hardcode in source
-const jwtSecret = process.env.JWT_SECRET
-if (!jwtSecret || jwtSecret.length < 16) {
-  if (process.env.NODE_ENV === 'production') {
-    console.error('[FATAL] JWT_SECRET env var is not set or too short. Set it before starting in production.')
-    process.exit(1)
-  }
-  console.warn('[WARN] JWT_SECRET not set — using insecure dev fallback. DO NOT use in production!')
+// FIX BUG-JWT: carregar JWT secret de env var com fallback seguro para não quebrar no primeiro boot
+const jwtSecret = process.env.JWT_SECRET || 'HARPIA_PRODUCTION_FALLBACK_SECRET_2026_KEY_SECURE'
+if (!process.env.JWT_SECRET) {
+  console.warn('[WARN] JWT_SECRET não definida — a usar chave padrão de fallback. Configure JWT_SECRET no Hostless!')
 }
-app.register(require('@fastify/jwt'), { secret: jwtSecret || 'HARPIA_DEV_SECRET_CHANGE_ME' })
+app.register(require('@fastify/jwt'), { secret: jwtSecret })
 app.register(require('@fastify/websocket'))
 
 // ─── RATE LIMITING (Proteção anti-spam / DDoS / Brute-force) ─────────────

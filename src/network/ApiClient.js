@@ -4,11 +4,15 @@
  */
 export class ApiClient {
   constructor(baseUrl) {
-    // FIX BUG-API1: empty string ('') is falsy but valid for relative URLs — handle explicitly
-    // FIX BUG-API2: window.location.origin on port 5173 (Vite dev server) would point to wrong port
-    // Default explicitly to port 8000 to match the Fastify server
+    // Permite URL customizada, ou deteta dinamicamente a origem (localhost, produção Hostless, etc.)
     if (baseUrl !== undefined) {
       this.baseUrl = baseUrl;
+    } else if (typeof window !== 'undefined' && window.location) {
+      if (window.location.port === '5173') {
+        this.baseUrl = 'http://localhost:8000';
+      } else {
+        this.baseUrl = window.location.origin;
+      }
     } else {
       this.baseUrl = 'http://localhost:8000';
     }
