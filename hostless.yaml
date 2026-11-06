@@ -1,5 +1,9 @@
 build:
-  command: "npm ci --omit=dev"
-system: auto
-min_cpu: 0.5
-max_cpu: 2
+  system: "docker"
+  min_cpu: 1
+  max_cpu: 2
+  min_memory: 1024
+  max_memory: 4096
+
+dockerfile_path: "./Dockerfile"
+working_directory: "/"
