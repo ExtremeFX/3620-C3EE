@@ -119,6 +119,8 @@ db.exec(`
   'ALTER TABLE pilot_storage ADD COLUMN mining_drone INTEGER DEFAULT 0 CHECK (mining_drone >= 0)',
   'ALTER TABLE pilots ADD COLUMN position_json       TEXT DEFAULT NULL',
   'ALTER TABLE pilots ADD COLUMN active_ship_id      TEXT DEFAULT "H-M2"',
+  'ALTER TABLE pilots ADD COLUMN created_ip          TEXT DEFAULT NULL',
+  'ALTER TABLE pilots ADD COLUMN last_ip             TEXT DEFAULT NULL',
   // Migrate last_daily_reward from TEXT to INTEGER (stored as epoch ms)
   // SQLite cannot ALTER column type, but INTEGER affinity handles numeric strings transparently
 ].forEach(sql => {
@@ -136,6 +138,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_active_missions_phase  ON active_missions(phase, pilot_id);
   CREATE INDEX IF NOT EXISTS idx_active_missions_pilot  ON active_missions(pilot_id);
   CREATE INDEX IF NOT EXISTS idx_market_orders_pilot    ON market_orders(pilot_id);
+  CREATE INDEX IF NOT EXISTS idx_pilots_created_ip      ON pilots(created_ip);
 `)
 
 module.exports = db

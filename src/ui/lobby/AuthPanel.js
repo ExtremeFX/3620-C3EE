@@ -54,7 +54,7 @@ export class AuthPanel extends UIComponent {
         </div>
         <div class="input-group">
           <label>Email</label>
-          <input type="email" name="email" placeholder="pilot@harpia.net" autocomplete="email">
+          <input type="email" name="email" placeholder="pilot@harpia.net" required autocomplete="email">
         </div>
         <div class="input-group">
           <label>Password</label>
@@ -159,8 +159,13 @@ export class AuthPanel extends UIComponent {
     const email = (eInput?.value || '').trim();
     const password = pInput?.value || '';
 
-    if (!username || !password) {
-      this._setMessage('Please enter username and password', 'error');
+    if (!username || !email || !password) {
+      this._setMessage('Por favor preenche todos os campos (Username, Email e Password)', 'error');
+      return;
+    }
+
+    if (password.length < 6) {
+      this._setMessage('A password deve ter no mínimo 6 caracteres', 'error');
       return;
     }
 
