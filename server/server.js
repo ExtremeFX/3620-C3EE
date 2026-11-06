@@ -117,6 +117,25 @@ app.register(async function (api) {
     wsManager.registerClient(pilotId, socket)
     console.log(`[WS] Piloto #${pilotId} conectado via WebSocket`)
   })
+
+  // ─── DIAGNOSTIC: TESTE TCP PORTA 587 (SMTP GMAIL) ──────────────────────────
+  api.get('/api/diag/smtp', async () => {
+    const net = require('net')
+    return new Promise((resolve) => {
+      const s = net.connect(587, 'smtp.gmail.com', () => {
+        resolve({ result: 'SMTP_PORT_587_OPEN', host: 'smtp.gmail.com', port: 587 })
+        s.end()
+      })
+      s.setTimeout(10000)
+      s.on('timeout', () => {
+        resolve({ result: 'SMTP_TIMEOUT', host: 'smtp.gmail.com', port: 587, detail: '10s timeout reached' })
+        s.destroy()
+      })
+      s.on('error', (e) => {
+        resolve({ result: 'SMTP_ERROR', code: e.code, message: e.message })
+      })
+    })
+  })
 })
 
 // ─── SERVER STARTUP (ASYNC SCHEMA + SEED + LISTEN) ───────────────────────────
