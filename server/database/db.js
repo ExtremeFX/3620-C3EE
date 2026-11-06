@@ -110,6 +110,17 @@ db.exec(`
     created_at       INTEGER DEFAULT (unixepoch() * 1000),
     FOREIGN KEY (pilot_id) REFERENCES pilots (id)
   );
+
+  CREATE TABLE IF NOT EXISTS pending_registrations (
+    email             TEXT PRIMARY KEY,
+    username          TEXT NOT NULL,
+    password_hash     TEXT NOT NULL,
+    code              TEXT NOT NULL,
+    client_ip         TEXT NOT NULL,
+    expires_at        INTEGER NOT NULL,
+    created_at        INTEGER NOT NULL,
+    attempts          INTEGER DEFAULT 0
+  );
 `)
 
 // FIX BUG-DB2: missing column migrations — consolidated and guarded by column existence check

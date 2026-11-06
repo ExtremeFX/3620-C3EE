@@ -121,6 +121,10 @@ export class ApiClient {
   }
 
   // Auth
+  getTurnstileSiteKey() {
+    return this.request('/auth/turnstile/sitekey');
+  }
+
   login(username, password) {
     return this.request('/auth/login', {
       method: 'POST',
@@ -128,10 +132,24 @@ export class ApiClient {
     });
   }
 
-  register(username, email, password) {
+  register(username, email, password, turnstileToken = '') {
     return this.request('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ username, email, password })
+      body: JSON.stringify({ username, email, password, turnstileToken })
+    });
+  }
+
+  verifyEmailCode(email, code) {
+    return this.request('/auth/register/verify', {
+      method: 'POST',
+      body: JSON.stringify({ email, code })
+    });
+  }
+
+  resendVerificationCode(email) {
+    return this.request('/auth/register/resend', {
+      method: 'POST',
+      body: JSON.stringify({ email })
     });
   }
 
