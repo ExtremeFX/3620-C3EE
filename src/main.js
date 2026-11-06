@@ -223,6 +223,9 @@ export class HarpiaGameEngine {
       ship: this.ship,
       asteroids: this.asteroids
     });
+    if (typeof window !== 'undefined') {
+      window.harpiaDroneMiningSystem = this.droneMiningSystem;
+    }
     this.miningModule = new MiningLaserModule({
       eventBus: this.bus,
       ship: this.ship,
@@ -281,7 +284,8 @@ export class HarpiaGameEngine {
     // ── Subsistema Multijogador Espacial (Naves Remotas & Chat Global) ──
     this.multiplayerSystem = new MultiplayerSystem({
       bus: this.bus,
-      localShip: this.ship
+      localShip: this.ship,
+      droneMiningSystem: this.droneMiningSystem
     });
     this.chatWidget = new MultiplayerChatWidget({ bus: this.bus });
     this.chatWidget.mount(document.body);

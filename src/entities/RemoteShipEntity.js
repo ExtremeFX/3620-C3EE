@@ -358,40 +358,60 @@ export class RemoteShipEntity {
     }
 
     // 2. Drones Grok da Nave Remota
-    if (this.miningTarget && this.miningTarget.dronesActive && target) {
+    const mt = this.miningTarget;
+    if (mt && mt.dronesActive) {
       if (this.remoteDrones.length === 0) this._createDroneElements();
 
-      const activeCount = Math.min(5, Math.max(1, this.miningTarget.droneCount || 2));
-      const targetScreen = camera.worldToScreen(target.x, target.y);
+      const isSplit = mt.droneMode === 'SPLIT';
+      const droneTargets = Array.isArray(mt.droneTargets) ? mt.droneTargets : [];
+      const activeCount = Math.min(5, Math.max(1, mt.droneCount || droneTargets.length || 2));
       const nowSec = Date.now() / 1000;
       const orbitRadius = 90;
 
       for (let i = 0; i < this.remoteDrones.length; i++) {
         const drone = this.remoteDrones[i];
-        if (i < activeCount) {
-          const orbitAngle = nowSec * 0.8 + (i * (Math.PI * 2 / activeCount));
-          const droneWorldX = target.x + Math.cos(orbitAngle) * orbitRadius;
-          const droneWorldY = target.y + Math.sin(orbitAngle) * orbitRadius;
-          const droneScreen = camera.worldToScreen(droneWorldX, droneWorldY);
-          const droneDeg = Math.round(orbitAngle * (180 / Math.PI) + 90);
-
-          drone.domEl.style.display = 'block';
-          drone.domEl.style.transform = `translate3d(${Math.round(droneScreen.x)}px, ${Math.round(droneScreen.y)}px, 0) translate(-50%, -50%) rotate(${droneDeg}deg)`;
-
-          drone.laserGroup.style.display = 'block';
-          drone.laserGlow.setAttribute('x1', droneScreen.x.toFixed(1));
-          drone.laserGlow.setAttribute('y1', droneScreen.y.toFixed(1));
-          drone.laserGlow.setAttribute('x2', targetScreen.x.toFixed(1));
-          drone.laserGlow.setAttribute('y2', targetScreen.y.toFixed(1));
-
-          drone.laserCore.setAttribute('x1', droneScreen.x.toFixed(1));
-          drone.laserCore.setAttribute('y1', droneScreen.y.toFixed(1));
-          drone.laserCore.setAttribute('x2', targetScreen.x.toFixed(1));
-          drone.laserCore.setAttribute('y2', targetScreen.y.toFixed(1));
-        } else {
+        if (i >= activeCount) {
           drone.domEl.style.display = 'none';
           drone.laserGroup.style.display = 'none';
+          continue;
         }
+
+        // Resolver o alvo deste drone individualmente
+        let droneTarget = null;
+        if (isSplit && droneTargets[i] && window.harpiaAsteroids) {
+          const ast = window.harpiaAsteroids.find(a => a.storageKey === droneTargets[i]);
+          if (ast && !ast.isDepleted) droneTarget = { x: ast.x, y: ast.y };
+        }
+        // Fallback: usar o alvo do laser da nave (modo FOCUS ou sem dados SPLIT)
+        if (!droneTarget) droneTarget = target;
+        // Se ainda não há alvo, esconder este drone
+        if (!droneTarget) {
+          drone.domEl.style.display = 'none';
+          drone.laserGroup.style.display = 'none';
+          continue;
+        }
+
+        const targetScreen = camera.worldToScreen(droneTarget.x, droneTarget.y);
+        const angleOffset = isSplit ? 0 : (i * (Math.PI * 2 / activeCount));
+        const orbitAngle = nowSec * 0.8 + angleOffset;
+        const droneWorldX = droneTarget.x + Math.cos(orbitAngle) * orbitRadius;
+        const droneWorldY = droneTarget.y + Math.sin(orbitAngle) * orbitRadius;
+        const droneScreen = camera.worldToScreen(droneWorldX, droneWorldY);
+        const droneDeg = Math.round(orbitAngle * (180 / Math.PI) + 90);
+
+        drone.domEl.style.display = 'block';
+        drone.domEl.style.transform = `translate3d(${Math.round(droneScreen.x)}px, ${Math.round(droneScreen.y)}px, 0) translate(-50%, -50%) rotate(${droneDeg}deg)`;
+
+        drone.laserGroup.style.display = 'block';
+        drone.laserGlow.setAttribute('x1', droneScreen.x.toFixed(1));
+        drone.laserGlow.setAttribute('y1', droneScreen.y.toFixed(1));
+        drone.laserGlow.setAttribute('x2', targetScreen.x.toFixed(1));
+        drone.laserGlow.setAttribute('y2', targetScreen.y.toFixed(1));
+
+        drone.laserCore.setAttribute('x1', droneScreen.x.toFixed(1));
+        drone.laserCore.setAttribute('y1', droneScreen.y.toFixed(1));
+        drone.laserCore.setAttribute('x2', targetScreen.x.toFixed(1));
+        drone.laserCore.setAttribute('y2', targetScreen.y.toFixed(1));
       }
     } else {
       for (const drone of this.remoteDrones) {

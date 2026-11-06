@@ -12,10 +12,12 @@ export class MultiplayerSystem {
    * @param {Object} options
    * @param {import('../core/EventBus.js').EventBus} options.bus
    * @param {import('../entities/ShipEntity.js').ShipEntity} options.localShip
+   * @param {import('../systems/DroneMiningSystem.js').DroneMiningSystem} [options.droneMiningSystem]
    */
-  constructor({ bus, localShip }) {
+  constructor({ bus, localShip, droneMiningSystem = null }) {
     this.bus = bus;
     this.localShip = localShip;
+    this.droneMiningSystem = droneMiningSystem;
 
     this.remoteShips = new Map(); // pilotId (Number) -> RemoteShipEntity
     this.telemetryInterval = 0.10; // 10 Hz (envio de telemetria a cada 100ms)
@@ -129,9 +131,7 @@ export class MultiplayerSystem {
           isMining: true,
           asteroidKey: asteroid?.storageKey || null,
           targetX: asteroid?.x,
-          targetY: asteroid?.y,
-          dronesActive: this.localDronesActive,
-          droneCount: this.localDroneCount
+          targetY: asteroid?.y
         };
         this._broadcastMiningState();
       });
@@ -141,9 +141,7 @@ export class MultiplayerSystem {
           isMining: false,
           asteroidKey: null,
           targetX: null,
-          targetY: null,
-          dronesActive: this.localDronesActive,
-          droneCount: this.localDroneCount
+          targetY: null
         };
         this._broadcastMiningState();
       });
@@ -151,22 +149,47 @@ export class MultiplayerSystem {
       this.bus.on('drones:state_changed', ({ isMining, activeCount }) => {
         this.localDronesActive = Boolean(isMining);
         this.localDroneCount = activeCount || 0;
-        this.localMiningState = {
-          isMining: Boolean(this.localMiningState?.isMining),
-          asteroidKey: this.localMiningState?.asteroidKey || null,
-          targetX: this.localMiningState?.targetX,
-          targetY: this.localMiningState?.targetY,
-          dronesActive: this.localDronesActive,
-          droneCount: this.localDroneCount
-        };
+        this._broadcastMiningState();
+      });
+
+      this.bus.on('drones:mode_changed', () => {
         this._broadcastMiningState();
       });
     }
   }
 
+  _getMiningPayload() {
+    let dronesActive = this.localDronesActive;
+    let droneMode = 'FOCUS';
+    let droneTargets = [];
+    let droneCount = this.localDroneCount;
+
+    const ds = this.droneMiningSystem || window.harpiaDroneMiningSystem;
+    if (ds && Array.isArray(ds.drones)) {
+      droneMode = (typeof ds.getSquadronMode === 'function') ? ds.getSquadronMode() : (ds.squadronMode || 'FOCUS');
+      const activeDrones = ds.drones.filter(d => d.state !== 'DOCKED');
+      if (activeDrones.length > 0) {
+        dronesActive = true;
+        droneCount = activeDrones.length;
+        droneTargets = activeDrones.map(d => d.targetAsteroid?.storageKey || null);
+      }
+    }
+
+    return {
+      isMining: Boolean(this.localMiningState?.isMining),
+      asteroidKey: this.localMiningState?.asteroidKey || null,
+      targetX: this.localMiningState?.targetX || null,
+      targetY: this.localMiningState?.targetY || null,
+      dronesActive,
+      droneCount,
+      droneMode,
+      droneTargets
+    };
+  }
+
   _broadcastMiningState() {
     if (!wsClient.isConnected) return;
-    wsClient.send('PILOT_MINING_STATE', this.localMiningState || { isMining: false, dronesActive: false });
+    wsClient.send('PILOT_MINING_STATE', this._getMiningPayload());
   }
 
   /**
@@ -218,7 +241,7 @@ export class MultiplayerSystem {
       warpState: ship.warpState,
       activeShipId: ship.shipId,
       systemId: getCurrentSystemId(),
-      mining: this.localMiningState
+      mining: this._getMiningPayload()
     });
   }
 

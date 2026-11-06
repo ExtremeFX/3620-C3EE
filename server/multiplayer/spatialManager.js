@@ -179,7 +179,9 @@ class SpatialMultiplayerManager {
       targetX: miningState.targetX,
       targetY: miningState.targetY,
       dronesActive: Boolean(miningState.dronesActive),
-      droneCount: miningState.droneCount || 0
+      droneCount: miningState.droneCount || 0,
+      droneMode: miningState.droneMode || 'FOCUS',
+      droneTargets: Array.isArray(miningState.droneTargets) ? miningState.droneTargets : []
     } : null
 
     // Notificar imediatamente todos os outros pilotos no mesmo sistema
