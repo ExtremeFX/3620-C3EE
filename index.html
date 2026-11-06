@@ -6,8 +6,44 @@
   <title>HARPIA Universe</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=17.0">
+  <link rel="stylesheet" href="css/style.css?v=17.1">
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script>
+    // Global error catcher — surfaces JS crashes visibly
+    window.onerror = function(msg, src, line, col, err) {
+      var el = document.getElementById('js-error-overlay');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'js-error-overlay';
+        el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:rgba(180,0,0,0.92);color:#fff;font-family:monospace;font-size:13px;padding:16px 20px;z-index:99999;white-space:pre-wrap;';
+        document.body.appendChild(el);
+      }
+      el.textContent += '[ERROR] ' + msg + '\n  at ' + src + ':' + line + ':' + col + '\n';
+      return false;
+    };
+    window.addEventListener('unhandledrejection', function(e) {
+      var el = document.getElementById('js-error-overlay');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'js-error-overlay';
+        el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:rgba(180,0,0,0.92);color:#fff;font-family:monospace;font-size:13px;padding:16px 20px;z-index:99999;white-space:pre-wrap;';
+        document.body.appendChild(el);
+      }
+      el.textContent += '[UNHANDLED] ' + (e.reason && (e.reason.stack || e.reason.message || e.reason)) + '\n';
+    });
+    // Fallback: if engine doesn't mount lobby within 4s, show a status message
+    window.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        var mount = document.getElementById('lobby-mount');
+        if (mount && !mount.hasChildNodes()) {
+          var fallback = document.createElement('div');
+          fallback.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,10,20,0.92);border:1.5px solid rgba(0,240,255,0.5);border-radius:10px;padding:32px 36px;width:340px;color:#00f0ff;font-family:Orbitron,sans-serif;text-align:center;z-index:300;';
+          fallback.innerHTML = '<div style="font-size:1rem;letter-spacing:3px;font-weight:700;">ENGINE BOOT ERROR</div><div style="font-size:0.75rem;color:#8cb0cc;margin-top:12px;line-height:1.6;">The game engine failed to initialize.<br>Check the red bar above for details.<br><br>Try a hard refresh: Ctrl+Shift+R</div>';
+          mount.appendChild(fallback);
+        }
+      }, 4000);
+    });
+  </script>
 </head>
 <body>
 

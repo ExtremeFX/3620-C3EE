@@ -25,12 +25,8 @@ export class Security {
     });
 
     // 4. Bloqueio de atalhos comuns de inspeção de código e DevTools
+    // NOTE: F12 e DevTools temporariamente habilitados para diagnóstico — reativar após debug
     document.addEventListener('keydown', (e) => {
-      // F12
-      if (e.key === 'F12') {
-        e.preventDefault();
-        return false;
-      }
       // Ctrl+S (Salvar página)
       if (e.ctrlKey && e.key.toLowerCase() === 's') {
         e.preventDefault();
@@ -38,11 +34,6 @@ export class Security {
       }
       // Ctrl+U (Ver código-fonte)
       if (e.ctrlKey && e.key.toLowerCase() === 'u') {
-        e.preventDefault();
-        return false;
-      }
-      // Ctrl+Shift+I / J (DevTools / Console)
-      if (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) {
         e.preventDefault();
         return false;
       }
