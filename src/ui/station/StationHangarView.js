@@ -2,17 +2,16 @@
  * HARPIA Universe - StationHangarView
  * Orquestrador Mestre da Estação (Padrão AAA)
  * Conecta State e EventBus aos submódulos desacoplados de apresentação:
- * - ShipOreStoragePanel (Esquerda)
- * - StationStoragePanel (Direita)
- * - ShipHangarPanel (Inferior)
- * - DronesHangarPanel (Janela Panorâmica Superior)
+ * - ShipOreStoragePanel (Esquerda: SHIP ORE STORAGE + GROK DRONES HANGAR integrados)
+ * - StationStoragePanel (Direita: STORAGE STATION)
+ * - ShipHangarPanel (Inferior: Doca de Naves)
+ * - MarketStationPanel & ShipSpecsPanel (Visualizações modais / Assembly)
  */
 import { UIComponent } from '../core/UIComponent.js';
 import { EV } from '../../core/EventBus.js';
 import { ShipOreStoragePanel } from './ShipOreStoragePanel.js';
 import { StationStoragePanel } from './StationStoragePanel.js';
 import { ShipHangarPanel } from './ShipHangarPanel.js';
-import { DronesHangarPanel } from './DronesHangarPanel.js';
 import { SplitStackModal } from './SplitStackModal.js';
 import { ShipSpecsPanel } from './ShipSpecsPanel.js';
 import { MarketStationPanel } from './MarketStationPanel.js';
@@ -47,11 +46,14 @@ export class StationHangarView extends UIComponent {
     })();
     this.assemblyShipImgEl = document.getElementById('assembly-ship-img');
 
-    // Instanciação dos submódulos puros de apresentação
+    // Instanciação dos submódulos de apresentação
+    // ShipOreStoragePanel integra minérios e baía de drones na mesma box esquerda
     this.shipOrePanel = new ShipOreStoragePanel({
       eventBus: this.bus,
       onTransfer: (cargo) => this._handleTransferOre(cargo),
-      onDropItem: (data) => this._handleDropItemToShip(data)
+      onDropItem: (data) => this._handleDropItemToShip(data),
+      onDropDrone: (data) => this._handleDropDroneToHangar(data),
+      onUnloadAllDrones: () => this._handleUnloadAllDrones()
     });
 
     this.stationStoragePanel = new StationStoragePanel({
@@ -76,14 +78,7 @@ export class StationHangarView extends UIComponent {
     });
 
     this.shipSpecsPanel = new ShipSpecsPanel({ eventBus: this.bus });
-
     this.marketPanel = new MarketStationPanel({ eventBus: this.bus, state: this.state });
-
-    this.dronesHangarPanel = new DronesHangarPanel({
-      eventBus: this.bus,
-      onDropDrone: (data) => this._handleDropDroneToHangar(data),
-      onUnloadAll: () => this._handleUnloadAllDrones()
-    });
 
     this.isOpen = false;
     this._isMounted = false;
@@ -101,15 +96,13 @@ export class StationHangarView extends UIComponent {
     const oreMount = document.getElementById('station-ore-storage-mount') || this.hudEl;
     const storageMount = document.getElementById('station-storage-mount') || this.hudEl;
     const hangarMount = document.getElementById('station-ship-hangar-mount') || this.hudEl;
-    const dronesMount = document.getElementById('station-drones-hangar-mount') || this.hudEl;
 
     if (oreMount) this.shipOrePanel.mount(oreMount);
     if (oreMount) this.shipSpecsPanel.mount(oreMount);
     if (storageMount) this.stationStoragePanel.mount(storageMount);
     if (hangarMount) this.shipHangarPanel.mount(hangarMount);
-    if (dronesMount) this.dronesHangarPanel.mount(dronesMount);
     if (this.splitStackModal) this.splitStackModal.mount(document.body);
-    // Market panel monta-se no overlay central
+
     if (this.overlayEl && this.marketPanel) {
       this.marketPanel.mount(this.overlayEl);
       this.marketPanel.root && this.marketPanel.root.classList.add('hidden');
@@ -133,8 +126,6 @@ export class StationHangarView extends UIComponent {
 
     if (this.shipSpecsPanel) this.shipSpecsPanel.hidePanel();
     if (this.marketPanel) this.marketPanel.hidePanel();
-    if (this.dronesHangarPanel) this.dronesHangarPanel.showPanel();
-
 
     if (this.btnMainHangar) this.btnMainHangar.classList.add('active');
     if (this.btnAssembly) this.btnAssembly.classList.remove('active');
@@ -149,14 +140,18 @@ export class StationHangarView extends UIComponent {
   syncState() {
     if (!this.state) return;
 
-    // 1. Box Esquerda: Carga da nave atual
-    const cargo = this.state.shipCargo || {
-      ferrox: 0,
-      crynex: 0,
-      varelium: 0,
-      capacity: 30
+    // 1. Box Esquerda: Carga e Drones da nave atual integrada
+    ensureInitialDrones();
+    const shipInfo = getShipInfo(this.activeShipId);
+    const cargo = {
+      ...(this.state.shipCargo || {}),
+      capacity: shipInfo?.capacity || 200
     };
-    this.shipOrePanel.render(cargo);
+    this.shipOrePanel.render({
+      cargo,
+      drones: this.state.shipDrones || { mining_drone: 0 },
+      activeShipId: this.activeShipId || 'H-M2'
+    });
 
     // 2. Box Direita: Armazém permanente da estação
     const minerals = this.state.stationMinerals || {
@@ -172,15 +167,6 @@ export class StationHangarView extends UIComponent {
     // 3. Box Inferior: Naves na doca
     const ships = this.state.pilotHangarShips || [];
     this.shipHangarPanel.render({ ships, activeShipId: this.activeShipId || 'H-M2' });
-
-    // 4. Drones Hangar: drones equipados na nave
-    ensureInitialDrones();
-    if (this.dronesHangarPanel) {
-      this.dronesHangarPanel.render({
-        drones: this.state.shipDrones || { mining_drone: 0 },
-        activeShipId: this.activeShipId || 'H-M2'
-      });
-    }
   }
 
   /**
@@ -226,7 +212,7 @@ export class StationHangarView extends UIComponent {
       this.addCleanup(unsubMinerals);
 
       const unsubCargo = this.bus.on('ship:cargo_updated', (cargo) => {
-        this.shipOrePanel.render(cargo);
+        this.shipOrePanel.renderCargo(cargo);
       });
       this.addCleanup(unsubCargo);
 
@@ -235,11 +221,9 @@ export class StationHangarView extends UIComponent {
       });
       this.addCleanup(unsubShips);
 
-      // Reactive update for drone bay
+      // Atualização reativa de drones na box integrada
       const unsubDrones = this.bus.on('ship:drones_updated', (drones) => {
-        if (this.dronesHangarPanel) {
-          this.dronesHangarPanel.render({ drones, activeShipId: this.activeShipId || 'H-M2' });
-        }
+        this.shipOrePanel.renderDrones(drones, this.activeShipId || 'H-M2');
       });
       this.addCleanup(unsubDrones);
 
@@ -266,7 +250,7 @@ export class StationHangarView extends UIComponent {
       });
       this.addCleanup(unsubSplit);
 
-      // Drone transfer events (DronesHangarPanel <-> StationStoragePanel)
+      // Eventos de transferência de Drones (Box Esquerda <-> Station Storage)
       const unsubDroneToBay = this.bus.on('drones:transfer_to_bay', (payload) => {
         this._handleDropDroneToHangar(payload);
       });
@@ -286,7 +270,7 @@ export class StationHangarView extends UIComponent {
       const unsubSwitchShip = this.bus.on('hangar:switch_ship', ({ shipId }) => {
         if (!shipId) return;
         this.activeShipId = shipId;
-        setActiveShip(shipId); // atualiza state global, capacidade e emite ship:active_changed
+        setActiveShip(shipId);
         this._updateCentralAssemblyShip(shipId);
         if (this.shipSpecsPanel) {
           this.shipSpecsPanel.render(shipId);
@@ -294,13 +278,13 @@ export class StationHangarView extends UIComponent {
         if (this.shipHangarPanel) {
           this.shipHangarPanel.setActiveShip(shipId);
         }
-        // Re-render drones panel with new ship's drone capacity
-        if (this.dronesHangarPanel) {
-          this.dronesHangarPanel.render({
-            drones: this.state?.shipDrones || { mining_drone: 0 },
-            activeShipId: shipId
-          });
-        }
+        // Atualiza a box integrada com a nova capacidade de carga e drones
+        const shipInfo = getShipInfo(shipId);
+        this.shipOrePanel.render({
+          cargo: { ...(this.state?.shipCargo || {}), capacity: shipInfo?.capacity || 200 },
+          drones: this.state?.shipDrones || { mining_drone: 0 },
+          activeShipId: shipId
+        });
       });
       this.addCleanup(unsubSwitchShip);
 
@@ -366,7 +350,6 @@ export class StationHangarView extends UIComponent {
     const leftPanel = document.getElementById('hangar-left-panel');
     if (id === 'assembly') {
       if (this.marketPanel) this.marketPanel.hidePanel();
-      if (this.dronesHangarPanel) this.dronesHangarPanel.hidePanel();
       if (leftPanel) leftPanel.classList.add('collapsed');
       if (this.overlayEl) this.overlayEl.classList.add('mode-assembly');
       this._updateCentralAssemblyShip(this.activeShipId);
@@ -378,7 +361,6 @@ export class StationHangarView extends UIComponent {
       }, 420);
     } else if (id === 'market_station') {
       if (this.shipSpecsPanel) this.shipSpecsPanel.hidePanel();
-      if (this.dronesHangarPanel) this.dronesHangarPanel.hidePanel();
       if (leftPanel) leftPanel.classList.add('collapsed');
       if (this.overlayEl) this.overlayEl.classList.remove('mode-assembly');
       setTimeout(() => {
@@ -387,7 +369,6 @@ export class StationHangarView extends UIComponent {
     } else {
       if (this.marketPanel) this.marketPanel.hidePanel();
       if (this.shipSpecsPanel) this.shipSpecsPanel.hidePanel();
-      if (this.dronesHangarPanel) this.dronesHangarPanel.showPanel();
       setTimeout(() => {
         if (leftPanel) leftPanel.classList.remove('collapsed');
         if (this.overlayEl) this.overlayEl.classList.remove('mode-assembly');
@@ -455,7 +436,6 @@ export class StationHangarView extends UIComponent {
     this.shipOrePanel.destroy();
     this.stationStoragePanel.destroy();
     this.shipHangarPanel.destroy();
-    if (this.dronesHangarPanel) this.dronesHangarPanel.destroy();
     if (this.shipSpecsPanel) this.shipSpecsPanel.destroy();
     if (this.marketPanel) this.marketPanel.destroy();
     if (this.splitStackModal) this.splitStackModal.destroy();
@@ -463,4 +443,3 @@ export class StationHangarView extends UIComponent {
     this._isMounted = false;
   }
 }
-

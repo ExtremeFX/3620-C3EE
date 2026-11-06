@@ -296,6 +296,15 @@ export class StationStoragePanel extends UIComponent {
 
           if (!payload || !payload.itemId) return;
 
+          // Se veio dos drones da nave para a estação:
+          if (payload.source === 'drones_hangar') {
+            if (this.bus) {
+              this.bus.emit('drones:transfer_to_station', { itemId: payload.itemId, amount: payload.amount });
+            }
+            playSciFiBeep(880, 0.12, 'sine', 0.25);
+            return;
+          }
+
           // Se veio da nave para a estação: transfere e empilha!
           if (payload.source === 'ship_storage') {
             const isShift = !!payload.shiftKey || !!e.shiftKey;

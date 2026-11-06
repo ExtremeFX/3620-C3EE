@@ -1713,3 +1713,113 @@ body:not(.in-game) .space-ore-storage,
   pointer-events: none;
 }
 
+
+/* ==========================================================================
+   INTEGRATED SHIP STORAGE (SHIP ORE STORAGE + GROK DRONES HANGAR)
+   ========================================================================== */
+.ship-dual-storage-content {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  padding: 56px 26px 24px 26px !important;
+  overflow: hidden !important;
+}
+
+.ship-storage-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.ship-ore-section {
+  margin-bottom: 2px;
+}
+
+.ship-drones-section {
+  margin-top: 2px;
+}
+
+.hangar-sub-header {
+  border-bottom: 1.5px solid rgba(0, 240, 255, 0.35);
+  padding: 4px 10px 8px 10px;
+}
+
+.hangar-section-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.4), #00f0ff, rgba(0, 240, 255, 0.4), transparent);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  margin: 6px 0;
+  flex-shrink: 0;
+}
+
+.ship-ore-dropzone,
+.ship-drones-dropzone {
+  flex: 1;
+  min-height: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 4px 0;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  background: rgba(0, 20, 35, 0.25);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ship-items-grid,
+.drones-items-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-content: flex-start;
+  padding: 4px;
+}
+
+.ship-section-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 4px;
+  margin-bottom: 2px;
+  flex-shrink: 0;
+}
+
+.ship-section-actions .panel-action-btn,
+.ship-section-actions .drones-unload-btn {
+  padding: 5px 16px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  border-radius: 3px;
+  background: rgba(0, 50, 80, 0.7);
+  border: 1px solid rgba(0, 212, 255, 0.6);
+  color: #00f0ff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.5);
+}
+
+.ship-section-actions .panel-action-btn:hover:not(:disabled),
+.ship-section-actions .drones-unload-btn:hover:not(:disabled) {
+  background: rgba(0, 240, 255, 0.25);
+  border-color: #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+.ship-section-actions .panel-action-btn:disabled,
+.ship-section-actions .drones-unload-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: rgba(0, 212, 255, 0.2);
+  color: rgba(255, 255, 255, 0.35);
+  box-shadow: none;
+  transform: none;
+}
