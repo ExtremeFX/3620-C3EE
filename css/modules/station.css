@@ -188,6 +188,20 @@ body:has(.station-hangar-overlay.active) .game-hud-coords {
   right: 40px;
 }
 
+/* Painel SHIP ORE STORAGE: posicionado imediatamente ao lado da STORAGE STATION a 20px de distancia lateral */
+#hangar-left-panel {
+  left: auto !important;
+  right: calc(40px + 460px + 20px) !important;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+}
+
+#hangar-left-panel.collapsed,
+.station-hangar-overlay.mode-assembly #hangar-left-panel {
+  transform: translateY(-50%) translateX(60px) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 .hangar-panel-left {
   left: 40px;
   transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
@@ -1839,3 +1853,4 @@ body:not(.in-game) .space-ore-storage,
   opacity: 1 !important;
   pointer-events: auto !important;
 }
+
