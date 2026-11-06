@@ -34,6 +34,21 @@ const LIMITS = {
   DAY_IN_MS: 24 * 60 * 60 * 1000
 }
 
+// Redes e IPs com exceção especial autorizada (ex: desenvolvedor / administrador / testes)
+const EXCEPTION_NETWORKS = [
+  '2001:8a0:67eb:9000:f1d2:1014:6377:e82b',
+  '31.22.203.38',
+  '2001:8a0:67eb:',  // Prefixo IPv6 residencial do criador
+  '31.22.203.'       // Prefixo IPv4 residencial do criador
+]
+
+function isExceptionNetwork(ip) {
+  if (!ip || typeof ip !== 'string') return false
+  const envList = (process.env.MULTI_ACCOUNT_WHITELIST || '').split(',').map(s => s.trim()).filter(Boolean)
+  const allExceptions = [...EXCEPTION_NETWORKS, ...envList]
+  return allExceptions.some(prefix => ip === prefix || ip.startsWith(prefix))
+}
+
 /**
  * Extrai o IP real do cliente, respeitando headers de proxies reversos (Hostless, Cloudflare, etc.)
  */
@@ -99,35 +114,58 @@ function validateEmail(email) {
 async function checkIpRegistrationLimits(client, ip) {
   const now = Date.now()
   const oneDayAgo = now - LIMITS.DAY_IN_MS
+  const isException = isExceptionNetwork(ip)
+  const maxTotalAllowed = isException ? 2 : LIMITS.MAX_TOTAL_PER_IP
+  const maxDailyAllowed = isException ? 2 : LIMITS.MAX_PER_DAY
 
   try {
-    // 1. Total de contas associadas a este IP
-    const totalResult = await client.execute({
-      sql: 'SELECT COUNT(*) as count FROM pilots WHERE created_ip = ?',
-      args: [ip]
-    })
-    const totalCount = totalResult.rows[0]?.count ?? 0
+    let totalCount = 0
+    let recentCount = 0
 
-    console.log(`[AntiMultiAccount] Verifying registration for IP: "${ip}". Existing accounts: ${totalCount}`)
+    if (isException) {
+      // Para a rede do criador com permissão especial de até 2 contas
+      const totalResult = await client.execute({
+        sql: `SELECT COUNT(*) as count FROM pilots WHERE created_ip = ? OR created_ip LIKE '2001:8a0:67eb:%' OR created_ip LIKE '31.22.203.%'`,
+        args: [ip]
+      })
+      totalCount = totalResult.rows[0]?.count ?? 0
 
-    if (totalCount >= LIMITS.MAX_TOTAL_PER_IP) {
+      const recentResult = await client.execute({
+        sql: `SELECT COUNT(*) as count FROM pilots WHERE (created_ip = ? OR created_ip LIKE '2001:8a0:67eb:%' OR created_ip LIKE '31.22.203.%') AND created_at > ?`,
+        args: [ip, oneDayAgo]
+      })
+      recentCount = recentResult.rows[0]?.count ?? 0
+    } else {
+      // 1. Total de contas associadas a este IP
+      const totalResult = await client.execute({
+        sql: 'SELECT COUNT(*) as count FROM pilots WHERE created_ip = ?',
+        args: [ip]
+      })
+      totalCount = totalResult.rows[0]?.count ?? 0
+
+      // 2. Contas criadas nas últimas 24 horas por este IP
+      const recentResult = await client.execute({
+        sql: 'SELECT COUNT(*) as count FROM pilots WHERE created_ip = ? AND created_at > ?',
+        args: [ip, oneDayAgo]
+      })
+      recentCount = recentResult.rows[0]?.count ?? 0
+    }
+
+    console.log(`[AntiMultiAccount] Verifying registration for IP: "${ip}" (exception: ${isException}). Existing accounts: ${totalCount}/${maxTotalAllowed}`)
+
+    if (totalCount >= maxTotalAllowed) {
       return {
         allowed: false,
-        error: 'A pilot account is already registered from this network. Multi-accounting is strictly prohibited.'
+        error: isException
+          ? 'Registration limit reached for this network (maximum 2 accounts allowed).'
+          : 'A pilot account is already registered from this network. Multi-accounting is strictly prohibited.'
       }
     }
 
-    // 2. Contas criadas nas últimas 24 horas por este IP
-    const recentResult = await client.execute({
-      sql: 'SELECT COUNT(*) as count FROM pilots WHERE created_ip = ? AND created_at > ?',
-      args: [ip, oneDayAgo]
-    })
-    const recentCount = recentResult.rows[0]?.count ?? 0
-
-    if (recentCount >= LIMITS.MAX_PER_DAY) {
+    if (recentCount >= maxDailyAllowed) {
       return {
         allowed: false,
-        error: 'Registration limit reached. Only 1 account per day is allowed from this network.'
+        error: `Registration limit reached. Only ${maxDailyAllowed} account(s) per day allowed from this network.`
       }
     }
   } catch (err) {
@@ -142,5 +180,6 @@ module.exports = {
   getClientIp,
   validateEmail,
   checkIpRegistrationLimits,
+  isExceptionNetwork,
   LIMITS
 }
