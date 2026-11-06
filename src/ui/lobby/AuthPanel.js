@@ -211,7 +211,10 @@ export class AuthPanel extends UIComponent {
               size: 'normal',
               callback: (token) => {
                 this.turnstileToken = token;
-                this._setMessage('', '');
+                // Não apaga mensagens de erro ativas para o utilizador conseguir ler com calma
+                if (this.msgEl && !this.msgEl.classList.contains('error')) {
+                  this._setMessage('', '');
+                }
               },
               'expired-callback': () => {
                 this.turnstileToken = '';
@@ -306,8 +309,8 @@ export class AuthPanel extends UIComponent {
       }
     } catch (err) {
       this._setMessage(err.message || 'Erro ao processar registo', 'error');
-      // Faz reset ao turnstile para novo desafio se falhou
-      if (window.turnstile && this.turnstileWidgetId !== null) {
+      // Só reinicia o turnstile se o erro for especificamente do token anti-bot
+      if (err.message && err.message.toLowerCase().includes('turnstile') && window.turnstile && this.turnstileWidgetId !== null) {
         try { window.turnstile.reset(this.turnstileWidgetId); } catch (_) {}
       }
     }

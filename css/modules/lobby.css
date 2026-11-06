@@ -153,11 +153,19 @@
   font-size: 0.72rem;
   letter-spacing: 1px;
   text-align: center;
-  min-height: 18px;
+  min-height: 36px;
   margin-top: 6px;
+  line-height: 1.6;
+  transition: opacity 0.3s ease;
 }
-.auth-msg.error { color: #ff4466; }
-.auth-msg.ok    { color: #00ffaa; }
+.auth-msg.error {
+  color: #ff4466;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: rgba(255, 68, 102, 0.08);
+  border: 1px solid rgba(255, 68, 102, 0.18);
+}
+.auth-msg.ok { color: #00ffaa; }
 
 /* ── DAILY REWARD BOX (Lado Direito) ── */
 .daily-reward-box {
