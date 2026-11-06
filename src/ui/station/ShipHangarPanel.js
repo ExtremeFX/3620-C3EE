@@ -184,4 +184,18 @@ export class ShipHangarPanel extends UIComponent {
     this.activeShipId = shipId;
     this.render({ ships: this.currentShips, activeShipId: shipId });
   }
+
+  showPanel() {
+    if (this.root) {
+      this.root.classList.remove('hidden');
+      this.root.style.display = 'flex';
+    }
+  }
+
+  hidePanel() {
+    if (this.root) {
+      this.root.classList.add('hidden');
+      this.root.style.display = 'none';
+    }
+  }
 }

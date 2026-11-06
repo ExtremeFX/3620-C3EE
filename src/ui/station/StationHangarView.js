@@ -100,7 +100,10 @@ export class StationHangarView extends UIComponent {
     if (oreMount) this.shipOrePanel.mount(oreMount);
     if (oreMount) this.shipSpecsPanel.mount(oreMount);
     if (storageMount) this.stationStoragePanel.mount(storageMount);
-    if (hangarMount) this.shipHangarPanel.mount(hangarMount);
+    if (hangarMount) {
+      this.shipHangarPanel.mount(hangarMount);
+      this.shipHangarPanel.hidePanel();
+    }
     if (this.splitStackModal) this.splitStackModal.mount(document.body);
 
     if (this.overlayEl && this.marketPanel) {
@@ -350,6 +353,7 @@ export class StationHangarView extends UIComponent {
     const leftPanel = document.getElementById('hangar-left-panel');
     if (id === 'assembly') {
       if (this.marketPanel) this.marketPanel.hidePanel();
+      if (this.shipHangarPanel) this.shipHangarPanel.showPanel();
       if (leftPanel) leftPanel.classList.add('collapsed');
       if (this.overlayEl) this.overlayEl.classList.add('mode-assembly');
       this._updateCentralAssemblyShip(this.activeShipId);
@@ -361,6 +365,7 @@ export class StationHangarView extends UIComponent {
       }, 420);
     } else if (id === 'market_station') {
       if (this.shipSpecsPanel) this.shipSpecsPanel.hidePanel();
+      if (this.shipHangarPanel) this.shipHangarPanel.hidePanel();
       if (leftPanel) leftPanel.classList.add('collapsed');
       if (this.overlayEl) this.overlayEl.classList.remove('mode-assembly');
       setTimeout(() => {
@@ -369,6 +374,7 @@ export class StationHangarView extends UIComponent {
     } else {
       if (this.marketPanel) this.marketPanel.hidePanel();
       if (this.shipSpecsPanel) this.shipSpecsPanel.hidePanel();
+      if (this.shipHangarPanel) this.shipHangarPanel.hidePanel();
       setTimeout(() => {
         if (leftPanel) leftPanel.classList.remove('collapsed');
         if (this.overlayEl) this.overlayEl.classList.remove('mode-assembly');

@@ -1823,3 +1823,19 @@ body:not(.in-game) .space-ore-storage,
   box-shadow: none;
   transform: none;
 }
+
+/* ==========================================================================
+   SHIP HANGAR VISIBILITY: ONLY VISIBLE IN ASSEMBLY TAB, HIDDEN IN MAIN HANGAR
+   ========================================================================== */
+.station-hangar-overlay:not(.mode-assembly) .hangar-bottom-panel,
+.hangar-bottom-panel.hidden {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.station-hangar-overlay.mode-assembly .hangar-bottom-panel:not(.hidden) {
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
