@@ -128,6 +128,8 @@ app.register(async function (api) {
       spatialManager.updateTelemetry(pilotId, { ...msg.payload, username })
     } else if (msg.type === 'PILOT_MINING_STATE') {
       spatialManager.updateMining(pilotId, msg.payload)
+    } else if (msg.type === 'MINE_ASTEROID') {
+      spatialManager.mineAsteroid(pilotId, msg.payload?.key, msg.payload?.amount)
     } else if (msg.type === 'CHAT_MESSAGE') {
       spatialManager.broadcastChat(pilotId, username, msg.payload?.channel, msg.payload?.text)
     }

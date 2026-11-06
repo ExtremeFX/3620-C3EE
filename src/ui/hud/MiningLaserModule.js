@@ -617,6 +617,11 @@ export class MiningLaserModule extends UIComponent {
       return;
     }
 
+    // Notificar rede multiplayer para sincronização global de minério
+    if (typeof window !== 'undefined' && window.harpiaMultiplayer?.reportMine) {
+      window.harpiaMultiplayer.reportMine(target.storageKey, extracted);
+    }
+
     // 3. Adiciona ao porão da nave com o tipo de minério do asteroide alvo
     const oreId = target.oreType || 'ferrox';
     const oreName = target.oreName || 'Ferrox';

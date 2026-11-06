@@ -24,6 +24,10 @@ export class MultiplayerSystem {
     this.layerEl = null;
     this._ensureLayer();
     this._bindEvents();
+
+    if (typeof window !== 'undefined') {
+      window.harpiaMultiplayer = this;
+    }
   }
 
   _ensureLayer() {
@@ -89,11 +93,41 @@ export class MultiplayerSystem {
       }
     });
 
-    // 4. Ao mudar de sistema ou desconectar, limpar todas as naves remotas
+    // 4. Sincronização Inicial de Recursos dos Asteroides no Setor
+    wsClient.on('ASTEROIDS_INIT', (asteroidsList) => {
+      if (!Array.isArray(asteroidsList) || !window.harpiaAsteroids) return;
+      for (const data of asteroidsList) {
+        const ast = window.harpiaAsteroids.find(a => a.storageKey === data.key);
+        if (ast && typeof ast.applyServerUnits === 'function') {
+          ast.applyServerUnits(data.currentUnits, data.isDepleted);
+        }
+      }
+    });
+
+    // 5. Atualização em Tempo Real quando um asteroide é minerado por qualquer piloto
+    wsClient.on('ASTEROID_UPDATED', (data) => {
+      if (!data || !window.harpiaAsteroids) return;
+      const ast = window.harpiaAsteroids.find(a => a.storageKey === data.key);
+      if (ast && typeof ast.applyServerUnits === 'function') {
+        ast.applyServerUnits(data.currentUnits, data.isDepleted);
+      }
+    });
+
+    // 6. Ao mudar de sistema ou desconectar, limpar todas as naves remotas
     if (this.bus) {
       this.bus.on('system:changed', () => this.clearAll());
       this.bus.on('auth:logout', () => this.clearAll());
     }
+  }
+
+  /**
+   * Envia evento de mineração para o servidor replicar em tempo real
+   * @param {string} storageKey 
+   * @param {number} amount 
+   */
+  reportMine(storageKey, amount) {
+    if (!wsClient.isConnected) return;
+    wsClient.send('MINE_ASTEROID', { key: storageKey, amount: amount || 1 });
   }
 
   clearAll() {

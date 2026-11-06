@@ -239,6 +239,30 @@ export class AsteroidEntity {
   }
 
   /**
+   * Sincronização autoritativa vinda do Servidor Multiplayer
+   * @param {number} currentUnits 
+   * @param {boolean} isDepleted 
+   */
+  applyServerUnits(currentUnits, isDepleted = false) {
+    this.currentUnits = Math.max(0, Math.min(this.maxUnits, Number(currentUnits) || 0));
+    this.isDepleted = isDepleted || this.currentUnits <= 0;
+
+    if (this.isDepleted) {
+      this.currentUnits = 0;
+      this.targetScale = 0.0;
+      this.targetOpacity = 0.0;
+    } else {
+      this._syncTargets();
+      if (this.wrapEl) {
+        this.wrapEl.style.display = 'flex';
+      }
+    }
+
+    this._saveState();
+    this._updateHudTag();
+  }
+
+  /**
    * Executa o respawn do asteroide regenerando as 60 unidades completas
    * @param {boolean} [notify=true] Se deve emitir toast e efeito sonoro
    */

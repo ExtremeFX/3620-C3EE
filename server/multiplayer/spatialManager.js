@@ -12,6 +12,21 @@ class SpatialMultiplayerManager {
     this.wsManager = null
     this.tickInterval = null
     this.tickRateMs = 100 // 10 Hz (atualização a cada 100ms com interpolação suave no cliente)
+
+    // Pool de Asteroides Autorizados do Servidor (Partilhado por todos os pilotos em tempo real)
+    this.asteroids = new Map([
+      ['harpia_asteroid_ferrox_v1',  { key: 'harpia_asteroid_ferrox_v1',  ore: 'ferrox',   maxUnits: 60,  currentUnits: 60,  isDepleted: false, depletedAt: null }],
+      ['harpia_asteroid_ferrox_2',   { key: 'harpia_asteroid_ferrox_2',   ore: 'ferrox',   maxUnits: 60,  currentUnits: 60,  isDepleted: false, depletedAt: null }],
+      ['harpia_asteroid_ferrox_3',   { key: 'harpia_asteroid_ferrox_3',   ore: 'ferrox',   maxUnits: 60,  currentUnits: 60,  isDepleted: false, depletedAt: null }],
+      ['harpia_asteroid_ferrox_4',   { key: 'harpia_asteroid_ferrox_4',   ore: 'ferrox',   maxUnits: 60,  currentUnits: 60,  isDepleted: false, depletedAt: null }],
+      ['harpia_asteroid_varelium_1', { key: 'harpia_asteroid_varelium_1', ore: 'varelium', maxUnits: 60,  currentUnits: 60,  isDepleted: false, depletedAt: null }],
+      ['harpia_asteroid_crynex_1',   { key: 'harpia_asteroid_crynex_1',   ore: 'crynex',   maxUnits: 100, currentUnits: 100, isDepleted: false, depletedAt: null }],
+      ['harpia_asteroid_crynex_2',   { key: 'harpia_asteroid_crynex_2',   ore: 'crynex',   maxUnits: 100, currentUnits: 100, isDepleted: false, depletedAt: null }],
+      ['harpia_asteroid_crynex_3',   { key: 'harpia_asteroid_crynex_3',   ore: 'crynex',   maxUnits: 100, currentUnits: 100, isDepleted: false, depletedAt: null }],
+      ['harpia_asteroid_crynex_4',   { key: 'harpia_asteroid_crynex_4',   ore: 'crynex',   maxUnits: 100, currentUnits: 100, isDepleted: false, depletedAt: null }],
+      ['harpia_asteroid_crynex_5',   { key: 'harpia_asteroid_crynex_5',   ore: 'crynex',   maxUnits: 100, currentUnits: 100, isDepleted: false, depletedAt: null }],
+      ['harpia_asteroid_crynex_6',   { key: 'harpia_asteroid_crynex_6',   ore: 'crynex',   maxUnits: 100, currentUnits: 100, isDepleted: false, depletedAt: null }],
+    ])
   }
 
   /**
@@ -59,6 +74,55 @@ class SpatialMultiplayerManager {
         lastSeen: Date.now()
       })
       console.log(`[MULTIPLAYER] Piloto #${key} (${username}) entrou no espaço multijogador`)
+
+      // Envia imediatamente ao novo piloto o estado atual dos asteroides do servidor
+      if (this.wsManager) {
+        this.wsManager.sendToPilot(key, 'ASTEROIDS_INIT', this.getAsteroidsSnapshot())
+      }
+    }
+  }
+
+  /**
+   * Retorna snapshot compacto de todos os recursos de asteroides do mundo
+   */
+  getAsteroidsSnapshot() {
+    return Array.from(this.asteroids.values()).map(a => ({
+      key: a.key,
+      ore: a.ore,
+      maxUnits: a.maxUnits,
+      currentUnits: a.currentUnits,
+      isDepleted: a.isDepleted
+    }))
+  }
+
+  /**
+   * Processa a extração de minério de um asteroide partilhado
+   * @param {number} pilotId 
+   * @param {string} asteroidKey 
+   * @param {number} amount 
+   */
+  mineAsteroid(pilotId, asteroidKey, amount = 1) {
+    if (!asteroidKey || !this.asteroids.has(asteroidKey)) return
+    const ast = this.asteroids.get(asteroidKey)
+    if (ast.isDepleted || ast.currentUnits <= 0) return
+
+    const take = Math.min(amount, ast.currentUnits)
+    ast.currentUnits -= take
+
+    if (ast.currentUnits <= 0) {
+      ast.currentUnits = 0
+      ast.isDepleted = true
+      ast.depletedAt = Date.now()
+      console.log(`[MULTIPLAYER] Asteroide ${asteroidKey} esgotado por Piloto #${pilotId}`)
+    }
+
+    if (this.wsManager) {
+      this.wsManager.broadcast('ASTEROID_UPDATED', {
+        key: ast.key,
+        currentUnits: ast.currentUnits,
+        maxUnits: ast.maxUnits,
+        isDepleted: ast.isDepleted
+      })
     }
   }
 
@@ -185,6 +249,24 @@ class SpatialMultiplayerManager {
     for (const [id, p] of this.pilots.entries()) {
       if (now - p.lastSeen > 25000) {
         this.unregisterPilot(id)
+      }
+    }
+
+    // 2. Cooldown de Respawn dos Asteroides (60 minutos)
+    for (const ast of this.asteroids.values()) {
+      if (ast.isDepleted && ast.depletedAt && (now - ast.depletedAt >= 3600000)) {
+        ast.currentUnits = ast.maxUnits
+        ast.isDepleted = false
+        ast.depletedAt = null
+        console.log(`[MULTIPLAYER] Asteroide ${ast.key} regenerado automaticamente (${ast.maxUnits} U)`)
+        if (this.wsManager) {
+          this.wsManager.broadcast('ASTEROID_UPDATED', {
+            key: ast.key,
+            currentUnits: ast.currentUnits,
+            maxUnits: ast.maxUnits,
+            isDepleted: false
+          })
+        }
       }
     }
 
