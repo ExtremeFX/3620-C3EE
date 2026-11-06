@@ -78,6 +78,7 @@ export class AuthPanel extends UIComponent {
         <div style="text-align: center; margin-bottom: 4px;">
           <div style="color: #00f0ff; font-family: 'Orbitron', sans-serif; font-size: 0.78rem; letter-spacing: 2px; font-weight: 700;">VERIFICAÇÃO DE EMAIL</div>
           <div style="font-size: 0.72rem; color: #8cb0cc; margin-top: 5px; line-height: 1.4;" id="verify-email-text">Enviámos um código de 6 dígitos para o teu email.</div>
+          <div style="font-size: 0.68rem; color: #f0a500; margin-top: 6px; line-height: 1.4;">⚠️ Não encontras o email? Verifica a pasta de <strong>Spam</strong> ou <strong>Correio Indesejado</strong>.</div>
         </div>
         <div class="input-group" style="margin-top: 6px;">
           <label>Código de 6 Dígitos</label>
