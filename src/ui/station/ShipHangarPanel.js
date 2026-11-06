@@ -109,6 +109,8 @@ export class ShipHangarPanel extends UIComponent {
       imgSrc = 'assets/ships/TRANSPORT SHIPS/HARPI-T1.png';
     } else if (sid === 'H-M2') {
       imgSrc = 'assets/ships/MINING SHIPS/H-M2.png';
+    } else if (sid.includes('T-WS') || sid.includes('CARGI')) {
+      imgSrc = 'assets/ships/TRANSPORT SHIPS/T-WS-Cargi.png';
     } else if (!imgSrc) {
       imgSrc = 'assets/ships/MINING SHIPS/H-M2.png';
     }
