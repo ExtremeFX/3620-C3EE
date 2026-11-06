@@ -2,7 +2,7 @@
 
 /**
  * HARPIA Universe - Anti-Multi-Account & Identity Protection Module
- * 
+ *
  * Previne criação de contas infinitas, farming abusivo e multi-accounting através de:
  * 1. Validação estrita de formato de Email e bloqueio de domínios temporários / descartáveis
  * 2. Limite de criação de contas por endereço IP (tempo e total)
@@ -56,7 +56,7 @@ function getClientIp(req) {
 /**
  * Valida o email fornecido (formato e bloqueio de emails temporários)
  * @param {string} email
- * @returns {{ valid: boolean, error?: string }}
+ * @returns {{ valid: boolean, error?: string, cleanEmail?: string }}
  */
 function validateEmail(email) {
   if (!email || typeof email !== 'string') {
@@ -91,24 +91,26 @@ function validateEmail(email) {
 }
 
 /**
- * Verifica se o IP do cliente excedeu o limite de criação de contas
- * @param {Object} db - Instância SQLite
+ * Verifica se o IP do cliente excedeu o limite de criação de contas (async — Turso)
+ * @param {import('@libsql/client').Client} client - Instância Turso
  * @param {string} ip - Endereço IP do cliente
- * @returns {{ allowed: boolean, error?: string }}
+ * @returns {Promise<{ allowed: boolean, error?: string }>}
  */
-function checkIpRegistrationLimits(db, ip) {
+async function checkIpRegistrationLimits(client, ip) {
   const now = Date.now()
   const oneDayAgo = now - LIMITS.DAY_IN_MS
 
   try {
     // 1. Total de contas associadas a este IP
-    const totalRow = db.prepare(
-      'SELECT COUNT(*) as count FROM pilots WHERE created_ip = ?'
-    ).get(ip)
+    const totalResult = await client.execute({
+      sql: 'SELECT COUNT(*) as count FROM pilots WHERE created_ip = ?',
+      args: [ip]
+    })
+    const totalCount = totalResult.rows[0]?.count ?? 0
 
-    console.log(`[AntiMultiAccount] Verificando registo para IP: "${ip}". Contas existentes: ${totalRow ? totalRow.count : 0}`)
+    console.log(`[AntiMultiAccount] Verificando registo para IP: "${ip}". Contas existentes: ${totalCount}`)
 
-    if (totalRow && totalRow.count >= LIMITS.MAX_TOTAL_PER_IP) {
+    if (totalCount >= LIMITS.MAX_TOTAL_PER_IP) {
       return {
         allowed: false,
         error: 'Já existe uma conta de piloto registada a partir desta rede. Multi-contas não são permitidas.'
@@ -116,11 +118,13 @@ function checkIpRegistrationLimits(db, ip) {
     }
 
     // 2. Contas criadas nas últimas 24 horas por este IP
-    const recentRow = db.prepare(
-      'SELECT COUNT(*) as count FROM pilots WHERE created_ip = ? AND created_at > ?'
-    ).get(ip, oneDayAgo)
+    const recentResult = await client.execute({
+      sql: 'SELECT COUNT(*) as count FROM pilots WHERE created_ip = ? AND created_at > ?',
+      args: [ip, oneDayAgo]
+    })
+    const recentCount = recentResult.rows[0]?.count ?? 0
 
-    if (recentRow && recentRow.count >= LIMITS.MAX_PER_DAY) {
+    if (recentCount >= LIMITS.MAX_PER_DAY) {
       return {
         allowed: false,
         error: 'Limite de criação de contas atingido. Só é permitida 1 conta por dia a partir desta rede.'

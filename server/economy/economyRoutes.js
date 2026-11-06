@@ -47,38 +47,37 @@ function getDailyRewardStatus(lastRewardRaw) {
 }
 
 // Transação atómica para resgate da recompensa diária
-const claimTx = db.transaction((pilotId) => {
-  const pilot = db.prepare('SELECT id, pi_tokens, last_daily_reward FROM pilots WHERE id = ?').get(pilotId)
-  if (!pilot) return { error: 404, detail: 'Pilot not found' }
+async function claimRewardTx(pilotId) {
+  return db.transaction(async (tx) => {
+    const pilot = await tx.get('SELECT id, pi_tokens, last_daily_reward FROM pilots WHERE id = ?', [pilotId])
+    if (!pilot) return { error: 404, detail: 'Pilot not found' }
 
-  const status = getDailyRewardStatus(pilot.last_daily_reward)
+    const status = getDailyRewardStatus(pilot.last_daily_reward)
 
-  if (!status.available) {
-    return {
-      error: 400,
-      detail: 'Reward already claimed today. Next reward available at 00:00.',
-      remaining_seconds: status.remainingSeconds
+    if (!status.available) {
+      return {
+        error: 400,
+        detail: 'Reward already claimed today. Next reward available at 00:00.',
+        remaining_seconds: status.remainingSeconds
+      }
     }
-  }
 
-  const nowEpoch = Math.floor(Date.now())
-  const newPi = (pilot.pi_tokens || 0) + REWARD_PI
+    const nowEpoch = Math.floor(Date.now())
+    const newPi = (pilot.pi_tokens || 0) + REWARD_PI
 
-  // Armazena como inteiro puro epoch ms
-  db.prepare('UPDATE pilots SET pi_tokens = ?, last_daily_reward = ? WHERE id = ?')
-    .run(newPi, nowEpoch, pilot.id)
+    await tx.run('UPDATE pilots SET pi_tokens = ?, last_daily_reward = ? WHERE id = ?', [newPi, nowEpoch, pilot.id])
 
-  // Recalcular tempo restante até à próxima meia-noite
-  const updatedStatus = getDailyRewardStatus(nowEpoch)
+    const updatedStatus = getDailyRewardStatus(nowEpoch)
 
-  return {
-    success: true,
-    message: `+${REWARD_PI} PI REWARD CLAIMED!`,
-    reward_pi: REWARD_PI,
-    total_pi: newPi,
-    remaining_seconds: updatedStatus.remainingSeconds
-  }
-})
+    return {
+      success: true,
+      message: `+${REWARD_PI} PI REWARD CLAIMED!`,
+      reward_pi: REWARD_PI,
+      total_pi: newPi,
+      remaining_seconds: updatedStatus.remainingSeconds
+    }
+  })
+}
 
 const authMiddleware = {
   onRequest: async (req, reply) => {
@@ -90,7 +89,7 @@ const authMiddleware = {
 module.exports = async function (fastify) {
   // ─── GET /pilot/daily-reward ────────────────────────────────────────────
   fastify.get('/pilot/daily-reward', { onRequest: authMiddleware.onRequest }, async (req, reply) => {
-    const pilot = db.prepare('SELECT pi_tokens, last_daily_reward FROM pilots WHERE id = ?').get(req.user.id)
+    const pilot = await db.get('SELECT pi_tokens, last_daily_reward FROM pilots WHERE id = ?', [req.user.id])
     if (!pilot) return reply.code(404).send({ detail: 'Pilot not found' })
 
     const status = getDailyRewardStatus(pilot.last_daily_reward)
@@ -105,7 +104,7 @@ module.exports = async function (fastify) {
 
   // ─── POST /pilot/daily-reward ───────────────────────────────────────────
   fastify.post('/pilot/daily-reward', { onRequest: authMiddleware.onRequest }, async (req, reply) => {
-    const result = claimTx(req.user.id)
+    const result = await claimRewardTx(req.user.id)
     if (result.error) {
       return reply.code(result.error).send(result)
     }

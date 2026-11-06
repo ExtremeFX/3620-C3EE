@@ -6,48 +6,23 @@ const { getClientIp, validateEmail, checkIpRegistrationLimits } = require('../se
 const { verifyTurnstileToken, getSiteKey } = require('../security/turnstile')
 const { generateOtpCode, sendVerificationEmail } = require('./emailService')
 
-// Pre-compile prepared statements for hot paths
-const stmtGetPilotByUsername = db.prepare('SELECT * FROM pilots WHERE username = ?')
-const stmtGetPilotByEmailOrUsername = db.prepare(
-  'SELECT id FROM pilots WHERE username = ? OR (email IS NOT NULL AND email = ?)'
-)
-const stmtUpdateLastIp = db.prepare('UPDATE pilots SET last_ip = ? WHERE id = ?')
+async function registerPilotTx(username, email, hash, clientIp) {
+  return db.transaction(async (tx) => {
+    const now = Date.now()
+    const info = await tx.run(
+      'INSERT INTO pilots (username, email, password, credits, pi_tokens, last_daily_reward, created_at, created_ip, last_ip) VALUES (?,?,?,1000,0,?,?,?,?)',
+      [username, email, hash, now, now, clientIp, clientIp]
+    )
+    const newId = info.lastInsertRowid
 
-// Statements para verificação de email pendente
-const stmtGetPending = db.prepare('SELECT * FROM pending_registrations WHERE email = ?')
-const stmtSavePending = db.prepare(`
-  INSERT INTO pending_registrations (email, username, password_hash, code, client_ip, expires_at, created_at, attempts)
-  VALUES (?, ?, ?, ?, ?, ?, ?, 0)
-  ON CONFLICT(email) DO UPDATE SET
-    username = excluded.username,
-    password_hash = excluded.password_hash,
-    code = excluded.code,
-    client_ip = excluded.client_ip,
-    expires_at = excluded.expires_at,
-    created_at = excluded.created_at,
-    attempts = 0
-`)
-const stmtDeletePending = db.prepare('DELETE FROM pending_registrations WHERE email = ?')
-const stmtIncrementAttempts = db.prepare('UPDATE pending_registrations SET attempts = attempts + 1 WHERE email = ?')
+    await tx.run("INSERT INTO hangar_ships (pilot_id, ship_id, quantity) VALUES (?, 'H-M2', 1)", [newId])
+    await tx.run("INSERT INTO hangar_ships (pilot_id, ship_id, quantity) VALUES (?, 'H-7M', 5)", [newId])
+    await tx.run("INSERT INTO hangar_ships (pilot_id, ship_id, quantity) VALUES (?, 'T-WS-Cargi', 1)", [newId])
+    await tx.run('INSERT INTO pilot_storage (pilot_id, ferrox, crynex, varelium, mining_drone) VALUES (?, 0, 0, 0, 0)', [newId])
 
-// FIX BUG-AUTH1: wrap the entire registration in a transaction
-const registerTx = db.transaction((username, email, hash, clientIp) => {
-  const now = Date.now()
-  // FIX ANTI-SMURF: last_daily_reward definido para o momento atual impede recolher Daily Reward
-  // instantaneamente no minuto 0 após registo — desbloqueia apenas às 00:00 do dia seguinte.
-  const info = db.prepare(
-    'INSERT INTO pilots (username, email, password, credits, pi_tokens, last_daily_reward, created_at, created_ip, last_ip) VALUES (?,?,?,1000,0,?,?,?,?)'
-  ).run(username, email, hash, now, now, clientIp, clientIp)
-  const newId = info.lastInsertRowid
-
-  // Starter ships aligned with fleetRoutes.js expected schema
-  db.prepare("INSERT INTO hangar_ships (pilot_id, ship_id, quantity) VALUES (?, 'H-M2', 1)").run(newId)
-  db.prepare("INSERT INTO hangar_ships (pilot_id, ship_id, quantity) VALUES (?, 'H-7M', 5)").run(newId)
-  db.prepare("INSERT INTO hangar_ships (pilot_id, ship_id, quantity) VALUES (?, 'T-WS-Cargi', 1)").run(newId)
-  db.prepare('INSERT INTO pilot_storage (pilot_id, ferrox, crynex, varelium, mining_drone) VALUES (?, 0, 0, 0, 0)').run(newId)
-
-  return newId
-})
+    return newId
+  })
+}
 
 module.exports = async function (fastify) {
   // ─── CONFIGURAÇÃO PÚBLICA TURNSTILE ──────────────────────────────────────
@@ -59,7 +34,6 @@ module.exports = async function (fastify) {
   fastify.post('/auth/login', { config: RATE_LIMIT_STRICT_AUTH }, async (req, reply) => {
     const { username, password } = req.body || {}
 
-    // FIX BUG-AUTH2: validate input types and lengths before hitting bcrypt
     if (typeof username !== 'string' || typeof password !== 'string') {
       return reply.code(400).send({ detail: 'Username and password must be strings' })
     }
@@ -70,9 +44,8 @@ module.exports = async function (fastify) {
       return reply.code(400).send({ detail: 'Password too long' })
     }
 
-    const pilot = stmtGetPilotByUsername.get(username)
+    const pilot = await db.get('SELECT * FROM pilots WHERE username = ?', [username.trim()])
 
-    // FIX BUG-AUTH3: replace bcrypt.compareSync (blocks event loop) with async compare
     const valid = pilot && await bcrypt.compare(password, pilot.password)
     if (!valid) {
       return reply.code(401).send({ detail: 'Invalid credentials' })
@@ -80,9 +53,8 @@ module.exports = async function (fastify) {
 
     const token = fastify.jwt.sign({ sub: pilot.username, id: pilot.id }, { expiresIn: '24h' })
 
-    // Atualiza o último IP do piloto de forma segura
     try {
-      stmtUpdateLastIp.run(getClientIp(req), pilot.id)
+      await db.run('UPDATE pilots SET last_ip = ? WHERE id = ?', [getClientIp(req), pilot.id])
     } catch (_) {}
 
     return {
@@ -103,7 +75,7 @@ module.exports = async function (fastify) {
     const clientIp = getClientIp(req)
 
     // 1. Verificação de limites por IP (Anti-Multi-Account: 1 conta por IP)
-    const ipCheck = checkIpRegistrationLimits(db, clientIp)
+    const ipCheck = await checkIpRegistrationLimits(db.client, clientIp)
     if (!ipCheck.allowed) {
       return reply.code(429).send({ detail: ipCheck.error })
     }
@@ -140,7 +112,10 @@ module.exports = async function (fastify) {
     }
 
     // 5. Verificação de existência prévia na base de dados
-    const existing = stmtGetPilotByEmailOrUsername.get(cleanUsername, cleanEmail)
+    const existing = await db.get(
+      'SELECT id FROM pilots WHERE username = ? OR (email IS NOT NULL AND email = ?)',
+      [cleanUsername, cleanEmail]
+    )
     if (existing) {
       return reply.code(409).send({ detail: 'Nome de piloto ou email já se encontram em uso' })
     }
@@ -152,7 +127,18 @@ module.exports = async function (fastify) {
     const expiresAt = now + 15 * 60 * 1000 // Expira em 15 minutos
 
     // 7. Guarda nas inscrições pendentes aguardando confirmação do email
-    stmtSavePending.run(cleanEmail, cleanUsername, passwordHash, code, clientIp, expiresAt, now)
+    await db.run(`
+      INSERT INTO pending_registrations (email, username, password_hash, code, client_ip, expires_at, created_at, attempts)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+      ON CONFLICT(email) DO UPDATE SET
+        username = excluded.username,
+        password_hash = excluded.password_hash,
+        code = excluded.code,
+        client_ip = excluded.client_ip,
+        expires_at = excluded.expires_at,
+        created_at = excluded.created_at,
+        attempts = 0
+    `, [cleanEmail, cleanUsername, passwordHash, code, clientIp, expiresAt, now])
 
     // 8. Dispara o envio do email com o código
     await sendVerificationEmail(cleanEmail, cleanUsername, code)
@@ -176,51 +162,51 @@ module.exports = async function (fastify) {
     const cleanEmail = email.trim().toLowerCase()
     const cleanCode = code.trim().replace(/\s+/g, '')
 
-    const pending = stmtGetPending.get(cleanEmail)
+    const pending = await db.get('SELECT * FROM pending_registrations WHERE email = ?', [cleanEmail])
     if (!pending) {
       return reply.code(400).send({ detail: 'Nenhum registo pendente encontrado para este email. Inicia o registo novamente.' })
     }
 
     // Valida expiração (15 minutos)
     if (Date.now() > pending.expires_at) {
-      stmtDeletePending.run(cleanEmail)
+      await db.run('DELETE FROM pending_registrations WHERE email = ?', [cleanEmail])
       return reply.code(400).send({ detail: 'O código de verificação expirou. Por favor solicita um novo código.' })
     }
 
     // Valida se excedeu número de tentativas erradas (máx 5)
     if (pending.attempts >= 5) {
-      stmtDeletePending.run(cleanEmail)
+      await db.run('DELETE FROM pending_registrations WHERE email = ?', [cleanEmail])
       return reply.code(429).send({ detail: 'Demasiadas tentativas incorretas. O registo foi cancelado por segurança.' })
     }
 
     // Valida o código
     if (pending.code !== cleanCode) {
-      stmtIncrementAttempts.run(cleanEmail)
+      await db.run('UPDATE pending_registrations SET attempts = attempts + 1 WHERE email = ?', [cleanEmail])
       const remaining = 5 - (pending.attempts + 1)
       return reply.code(400).send({ detail: `Código incorreto. Tens mais ${remaining} tentativa(s).` })
     }
 
     // Re-valida limites por IP antes de criar
-    const ipCheck = checkIpRegistrationLimits(db, clientIp)
+    const ipCheck = await checkIpRegistrationLimits(db.client, clientIp)
     if (!ipCheck.allowed) {
-      stmtDeletePending.run(cleanEmail)
+      await db.run('DELETE FROM pending_registrations WHERE email = ?', [cleanEmail])
       return reply.code(429).send({ detail: ipCheck.error })
     }
 
     // Cria a conta do piloto definitivamente com naves e armazém
     let newId
     try {
-      newId = registerTx(pending.username, pending.email, pending.password_hash, clientIp)
+      newId = await registerPilotTx(pending.username, pending.email, pending.password_hash, clientIp)
     } catch (e) {
       if (e.message && e.message.includes('UNIQUE constraint')) {
-        stmtDeletePending.run(cleanEmail)
+        await db.run('DELETE FROM pending_registrations WHERE email = ?', [cleanEmail])
         return reply.code(409).send({ detail: 'Nome de piloto ou email já foram registados.' })
       }
       throw e
     }
 
     // Remove das pendências
-    stmtDeletePending.run(cleanEmail)
+    await db.run('DELETE FROM pending_registrations WHERE email = ?', [cleanEmail])
 
     const token = fastify.jwt.sign({ sub: pending.username, id: newId }, { expiresIn: '24h' })
     return {
@@ -238,7 +224,7 @@ module.exports = async function (fastify) {
     }
 
     const cleanEmail = email.trim().toLowerCase()
-    const pending = stmtGetPending.get(cleanEmail)
+    const pending = await db.get('SELECT * FROM pending_registrations WHERE email = ?', [cleanEmail])
     if (!pending) {
       return reply.code(400).send({ detail: 'Nenhum registo pendente encontrado para este email.' })
     }
@@ -253,8 +239,10 @@ module.exports = async function (fastify) {
     const newCode = generateOtpCode()
     const newExpiresAt = now + 15 * 60 * 1000
 
-    db.prepare('UPDATE pending_registrations SET code = ?, expires_at = ?, created_at = ?, attempts = 0 WHERE email = ?')
-      .run(newCode, newExpiresAt, now, cleanEmail)
+    await db.run(
+      'UPDATE pending_registrations SET code = ?, expires_at = ?, created_at = ?, attempts = 0 WHERE email = ?',
+      [newCode, newExpiresAt, now, cleanEmail]
+    )
 
     await sendVerificationEmail(cleanEmail, pending.username, newCode)
 
@@ -268,7 +256,7 @@ module.exports = async function (fastify) {
       catch { return reply.code(401).send({ detail: 'Invalid session' }) }
     }
   }, async (req, reply) => {
-    const pilot = db.prepare('SELECT id, username, credits, pi_tokens, last_daily_reward FROM pilots WHERE id = ?').get(req.user.id)
+    const pilot = await db.get('SELECT id, username, credits, pi_tokens, last_daily_reward FROM pilots WHERE id = ?', [req.user.id])
     if (!pilot) return reply.code(404).send({ detail: 'Pilot not found' })
     return { pilot }
   })
