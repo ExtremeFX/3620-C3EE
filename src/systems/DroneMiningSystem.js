@@ -14,7 +14,7 @@
  *    para o Drone Bay da nave (descarregando o que tiverem no porão da nave ao atracar).
  */
 import { EV } from '../core/EventBus.js';
-import { state, addShipOre } from '../core/state.js';
+import { state, addShipOre, setShipDrones } from '../core/state.js';
 import { playSciFiBeep, playSciFiAlert } from '../core/audio.js';
 import { getShipInfo } from '../config/shipsRegistry.js';
 
@@ -378,9 +378,15 @@ export class DroneMiningSystem {
     if (capacity <= 0) return 0;
 
     let equipped = Number(state.shipDrones?.mining_drone) || 0;
-    // Se estiver na H-M2 e ainda não abriu o hangar, permite a capacidade total da baía
+    // Se estiver na H-M2 e não tem drones nem no bay nem na estação, concede os 5 de série
     if (equipped <= 0 && activeShipId === 'H-M2') {
-      equipped = 5;
+      const inStation = Number(state.stationMinerals?.mining_drone) || 0;
+      if (inStation <= 0) {
+        equipped = 5;
+        if (typeof setShipDrones === 'function') {
+          setShipDrones({ mining_drone: 5 });
+        }
+      }
     }
     return Math.min(capacity, equipped);
   }

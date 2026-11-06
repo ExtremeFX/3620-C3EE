@@ -5,7 +5,7 @@
 import { UIComponent } from '../core/UIComponent.js';
 import { EV } from '../../core/EventBus.js';
 import { api } from '../../network/ApiClient.js';
-import { setMinerals, setShipCargo, setHangarShips, setFleetMissions, setDeposits, setPilotCredits, setActiveShip } from '../../core/state.js';
+import { setMinerals, setShipCargo, setShipDrones, setHangarShips, setFleetMissions, setDeposits, setPilotCredits, setActiveShip } from '../../core/state.js';
 import { LogoCanvas } from '../logo/LogoCanvas.js';
 import { AuthPanel } from './AuthPanel.js';
 import { DailyRewardWidget } from './DailyRewardWidget.js';
@@ -123,6 +123,9 @@ export class LobbyView extends UIComponent {
         }
         if (data.shipCargo) {
           setShipCargo(data.shipCargo);
+        }
+        if (data.shipDrones) {
+          setShipDrones(data.shipDrones);
         }
         if (data.missions) {
           setFleetMissions(data.missions);

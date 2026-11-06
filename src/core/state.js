@@ -22,11 +22,11 @@ const _initialShipInfo = getShipInfo(_savedActiveShip);
 const _savedShipDrones = (() => {
   try {
     const saved = localStorage.getItem('harpia_ship_drones');
-    if (!saved) return { mining_drone: 0 };
+    if (!saved) return { mining_drone: 5 };
     const parsed = JSON.parse(saved);
-    return (parsed !== null && typeof parsed === 'object') ? parsed : { mining_drone: 0 };
+    return (parsed !== null && typeof parsed === 'object') ? parsed : { mining_drone: 5 };
   } catch(e) {
-    return { mining_drone: 0 };
+    return { mining_drone: 5 };
   }
 })();
 
@@ -58,6 +58,25 @@ const _state = {
 let _bus = null;
 export function initStateBus(busInstance) {
   _bus = busInstance;
+  ensureInitialDrones();
+}
+
+export function ensureInitialDrones() {
+  const activeShip = _state.activeShipId || 'H-M2';
+  const shipInfo = getShipInfo(activeShip);
+  const cap = shipInfo?.droneCapacity || 0;
+  if (cap > 0 && activeShip === 'H-M2') {
+    const equipped = Number(_state.shipDrones?.mining_drone) || 0;
+    const inStation = Number(_state.stationMinerals?.mining_drone) || 0;
+    // Se o piloto não tem drones na baía e nem no armazém da estação, inicializa os 5 drones de série da H-M2
+    if (equipped <= 0 && inStation <= 0) {
+      _state.shipDrones = { ..._state.shipDrones, mining_drone: 5 };
+      try {
+        localStorage.setItem('harpia_ship_drones', JSON.stringify(_state.shipDrones));
+      } catch (e) {}
+      emit('ship:drones_updated', { ..._state.shipDrones });
+    }
+  }
 }
 
 function createDeepReadonlyProxy(target) {
@@ -166,6 +185,7 @@ export function setMinerals(minerals) {
     // FIX BUG-ST8: Number(-10) is truthy; use Number() without || 0 trick, guard explicitly
     _state.stationMinerals[k] = Number.isFinite(num) && num >= 0 ? num : 0;
   }
+  ensureInitialDrones();
   emit('minerals:updated', { ..._state.stationMinerals });
 }
 
@@ -204,6 +224,7 @@ export function setActiveShip(shipId) {
 
   emit('ship:cargo_updated', { ..._state.shipCargo });
   emit('ship:active_changed', { shipId, shipInfo });
+  ensureInitialDrones();
   emit('ship:drones_updated', { ..._state.shipDrones });
   _syncToServer();
 }
@@ -227,6 +248,7 @@ export function setShipCargo(cargo) {
 export function setShipDrones(drones) {
   if (!drones || typeof drones !== 'object') return;
   _state.shipDrones = { ..._state.shipDrones, ...drones };
+  ensureInitialDrones();
   try {
     localStorage.setItem('harpia_ship_drones', JSON.stringify(_state.shipDrones));
   } catch (e) {}

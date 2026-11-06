@@ -100,6 +100,19 @@ module.exports = async function (fastify) {
       activeShipCargo = { ferrox: 0, crynex: 0, varelium: 0, capacity: canonicalCapacities[activeShipId] || 200 }
     }
 
+    let shipDrones = null
+    if (activeShipCargo && activeShipCargo.drones && typeof activeShipCargo.drones === 'object') {
+      shipDrones = activeShipCargo.drones
+    } else {
+      const stationDrones = Number(storage.mining_drone) || 0
+      if (stationDrones === 0 && (activeShipId === 'H-M2' || (activeShip && activeShip.ship_id === 'H-M2'))) {
+        shipDrones = { mining_drone: 5 }
+        activeShipCargo.drones = shipDrones
+      } else {
+        shipDrones = { mining_drone: 0 }
+      }
+    }
+
     let savedPosition = null
     if (pilotRow && pilotRow.position_json) {
       try { savedPosition = JSON.parse(pilotRow.position_json) } catch(_) {}
@@ -111,6 +124,7 @@ module.exports = async function (fastify) {
       storage,
       activeShipId: activeShip ? activeShip.ship_id : activeShipId,
       shipCargo: activeShipCargo,
+      shipDrones,
       missions,
       deposits,
       credits,
@@ -127,7 +141,7 @@ module.exports = async function (fastify) {
     }
   }, async (req, reply) => {
     const pilotId = req.user.id
-    const { storage, shipCargo, shipId, activeShipId, position } = req.body || {}
+    const { storage, shipCargo, shipDrones, shipId, activeShipId, position } = req.body || {}
 
     const KNOWN_SHIP_IDS = new Set(Object.keys(CANONICAL_CAPACITIES))
     const targetShipId = (shipId || activeShipId || 'H-M2')
@@ -170,6 +184,20 @@ module.exports = async function (fastify) {
           crynex:   Math.max(0, Math.min(Math.floor(Number(shipCargo.crynex)   || 0), cap)),
           varelium: Math.max(0, Math.min(Math.floor(Number(shipCargo.varelium) || 0), cap)),
           capacity: cap
+        }
+
+        if (shipDrones && typeof shipDrones === 'object') {
+          sanitizedCargo.drones = {
+            mining_drone: Math.max(0, Math.min(5, Math.floor(Number(shipDrones.mining_drone) || 0)))
+          }
+        } else {
+          const existingShip = await tx.get('SELECT cargo_json FROM hangar_ships WHERE pilot_id = ? AND ship_id = ?', [pilotId, targetShipId])
+          if (existingShip && existingShip.cargo_json) {
+            try {
+              const parsed = JSON.parse(existingShip.cargo_json)
+              if (parsed && parsed.drones) sanitizedCargo.drones = parsed.drones
+            } catch(_) {}
+          }
         }
         const total = sanitizedCargo.ferrox + sanitizedCargo.crynex + sanitizedCargo.varelium
         if (total > cap) {

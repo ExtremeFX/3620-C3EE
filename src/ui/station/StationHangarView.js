@@ -16,7 +16,7 @@ import { DronesHangarPanel } from './DronesHangarPanel.js';
 import { SplitStackModal } from './SplitStackModal.js';
 import { ShipSpecsPanel } from './ShipSpecsPanel.js';
 import { MarketStationPanel } from './MarketStationPanel.js';
-import { transferItemToStation, transferItemToShip, transferAllCargoToStation, setActiveShip, transferDroneToShip, transferDroneToStation, unloadAllDronesToStation } from '../../core/state.js';
+import { transferItemToStation, transferItemToShip, transferAllCargoToStation, setActiveShip, transferDroneToShip, transferDroneToStation, unloadAllDronesToStation, ensureInitialDrones } from '../../core/state.js';
 import { getShipInfo } from '../../config/shipsRegistry.js';
 
 export class StationHangarView extends UIComponent {
@@ -174,6 +174,7 @@ export class StationHangarView extends UIComponent {
     this.shipHangarPanel.render({ ships, activeShipId: this.activeShipId || 'H-M2' });
 
     // 4. Drones Hangar: drones equipados na nave
+    ensureInitialDrones();
     if (this.dronesHangarPanel) {
       this.dronesHangarPanel.render({
         drones: this.state.shipDrones || { mining_drone: 0 },
