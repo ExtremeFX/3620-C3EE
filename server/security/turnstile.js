@@ -28,14 +28,19 @@ async function verifyTurnstileToken(token, remoteIp) {
     return { success: true }
   }
 
+  const secretKey = process.env.TURNSTILE_SECRET_KEY || DEFAULT_SECRET_KEY
+
   if (!token || typeof token !== 'string' || token.trim().length === 0) {
+    // Em modo de chaves padrão de teste, se o widget foi bloqueado por adblock/extensão, permite prosseguir
+    if (secretKey === DEFAULT_SECRET_KEY) {
+      console.warn('[Turnstile] Token ausente em modo teste (adblock/extensão do browser). A permitir avanço para verificação.')
+      return { success: true }
+    }
     return {
       success: false,
       error: 'Por favor resolve a verificação de segurança Cloudflare Turnstile anti-bot.'
     }
   }
-
-  const secretKey = process.env.TURNSTILE_SECRET_KEY || DEFAULT_SECRET_KEY
 
   try {
     const formData = new URLSearchParams()

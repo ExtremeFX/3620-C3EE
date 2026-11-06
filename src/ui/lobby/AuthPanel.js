@@ -67,8 +67,8 @@ export class AuthPanel extends UIComponent {
           <label>Password</label>
           <input type="password" name="password" placeholder="••••••••" required autocomplete="new-password">
         </div>
-        <div class="input-group" style="align-items: center; margin-top: 4px; min-height: 65px;" id="turnstile-wrapper">
-          <div id="turnstile-container"></div>
+        <div class="input-group" style="align-items: center; justify-content: center; margin: 4px 0; min-height: 65px;" id="turnstile-wrapper">
+          <div class="cf-turnstile" id="turnstile-container" data-sitekey="1x00000000000000000000AA" data-theme="dark"></div>
         </div>
         <button type="submit" class="auth-btn">CREATE ACCOUNT</button>
       </form>
@@ -104,6 +104,7 @@ export class AuthPanel extends UIComponent {
     this.msgEl = wrapper.querySelector('#auth-msg');
 
     this.bindEvents();
+    this._initTurnstile();
   }
 
   bindEvents() {
@@ -288,7 +289,9 @@ export class AuthPanel extends UIComponent {
     this._setMessage('A enviar código de verificação...', '');
 
     try {
-      const res = await api.register(username, email, password, this.turnstileToken);
+      const turnstileField = this.registerForm.querySelector('[name="cf-turnstile-response"]');
+      const token = (turnstileField?.value || this.turnstileToken || '').trim();
+      const res = await api.register(username, email, password, token);
 
       if (res && res.step === 'verification_required') {
         this._setMessage(res.message || 'Código enviado com sucesso!', 'ok');
