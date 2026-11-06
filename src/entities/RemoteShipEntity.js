@@ -30,7 +30,7 @@ export class RemoteShipEntity {
     this.warpState = data.wrp || 'IDLE';
     this.miningTarget = data.min || null;
 
-    this.baseWidth = 90;
+    this.baseWidth = 150;
     this.parentLayer = parentLayer;
 
     this.wrapEl = null;
@@ -77,8 +77,8 @@ export class RemoteShipEntity {
       this.imgEl.src = info.imageSrc || info.thumbnail || 'assets/ships/MINING SHIPS/H-M2.png';
     }
 
-    if (info.hullSpan) {
-      this.baseWidth = Math.round(info.hullSpan * 0.6);
+    if (info && info.hullSpan) {
+      this.baseWidth = info.hullSpan;
     }
 
     const shipTag = this.badgeEl?.querySelector('.remote-pilot-ship-tag');
