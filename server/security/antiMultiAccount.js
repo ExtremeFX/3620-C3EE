@@ -27,10 +27,10 @@ const DISPOSABLE_EMAIL_DOMAINS = new Set([
 // Expressão regular RFC 5322 simplificada para email
 const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/
 
-// Configurações de limites por IP
+// Configurações estritas anti-multi-account por IP
 const LIMITS = {
-  MAX_PER_DAY: 1,      // Máximo de 1 conta criada por IP a cada 24 horas
-  MAX_TOTAL_PER_IP: 2, // Limite vitalício de 2 contas por IP (permite 2 jogadores na mesma rede/casa)
+  MAX_PER_DAY: 1,      // Apenas 1 conta por IP por dia
+  MAX_TOTAL_PER_IP: 1, // Limite estrito de 1 conta única por IP
   DAY_IN_MS: 24 * 60 * 60 * 1000
 }
 
@@ -97,16 +97,25 @@ function validateEmail(email) {
  * @returns {{ allowed: boolean, error?: string }}
  */
 function checkIpRegistrationLimits(db, ip) {
-  // Ignora limitação para localhost em desenvolvimento se desejado
-  if (process.env.NODE_ENV !== 'production' && (ip === '127.0.0.1' || ip === '::1')) {
-    return { allowed: true }
-  }
-
   const now = Date.now()
   const oneDayAgo = now - LIMITS.DAY_IN_MS
 
   try {
-    // 1. Contas criadas nas últimas 24 horas por este IP
+    // 1. Total de contas associadas a este IP
+    const totalRow = db.prepare(
+      'SELECT COUNT(*) as count FROM pilots WHERE created_ip = ?'
+    ).get(ip)
+
+    console.log(`[AntiMultiAccount] Verificando registo para IP: "${ip}". Contas existentes: ${totalRow ? totalRow.count : 0}`)
+
+    if (totalRow && totalRow.count >= LIMITS.MAX_TOTAL_PER_IP) {
+      return {
+        allowed: false,
+        error: 'Já existe uma conta de piloto registada a partir desta rede. Multi-contas não são permitidas.'
+      }
+    }
+
+    // 2. Contas criadas nas últimas 24 horas por este IP
     const recentRow = db.prepare(
       'SELECT COUNT(*) as count FROM pilots WHERE created_ip = ? AND created_at > ?'
     ).get(ip, oneDayAgo)
@@ -114,24 +123,11 @@ function checkIpRegistrationLimits(db, ip) {
     if (recentRow && recentRow.count >= LIMITS.MAX_PER_DAY) {
       return {
         allowed: false,
-        error: 'Limite de criação de contas atingido. Só é permitida 1 nova conta por rede a cada 24 horas.'
-      }
-    }
-
-    // 2. Total de contas associadas a este IP
-    const totalRow = db.prepare(
-      'SELECT COUNT(*) as count FROM pilots WHERE created_ip = ?'
-    ).get(ip)
-
-    if (totalRow && totalRow.count >= LIMITS.MAX_TOTAL_PER_IP) {
-      return {
-        allowed: false,
-        error: 'Limite máximo de 2 contas atingido para esta rede de internet.'
+        error: 'Limite de criação de contas atingido. Só é permitida 1 conta por dia a partir desta rede.'
       }
     }
   } catch (err) {
     console.warn('[AntiMultiAccount] Aviso ao verificar limites de IP:', err.message)
-    // Em caso de erro na consulta, não bloqueia o utilizador legítimo
     return { allowed: true }
   }
 

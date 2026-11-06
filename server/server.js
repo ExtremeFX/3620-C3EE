@@ -26,7 +26,7 @@ const seedTx = db.transaction(() => {
 })
 seedTx()
 
-const app = Fastify({ logger: true })
+const app = Fastify({ logger: true, trustProxy: true })
 
 // ─── JSON BODY PARSER ────────────────────────────────────────────────────────
 app.addContentTypeParser('application/json', { parseAs: 'string' }, (req, body, done) => {
