@@ -5,10 +5,19 @@ const HEARTBEAT_INTERVAL_MS = 30_000 // 30 seconds
 class WebSocketManager {
   constructor() {
     this.clients = new Map() // pilot_id -> Set(sockets)
+    this._onMessageCallback = null
+    this._onDisconnectCallback = null
   }
 
-  registerClient(pilotId, socket) {
-    // FIX BUG-WS1: reject unauthenticated connections (pilotId = 0 from failed JWT)
+  onMessage(cb) {
+    this._onMessageCallback = cb
+  }
+
+  onDisconnect(cb) {
+    this._onDisconnectCallback = cb
+  }
+
+  registerClient(pilotId, socket, username = 'Piloto') {
     if (!pilotId || pilotId === 0) {
       try { socket.close(4003, 'Authentication required') } catch (_) {}
       return
@@ -20,17 +29,7 @@ class WebSocketManager {
     }
     this.clients.get(key).add(socket)
 
-    // FIX BUG-WS2: missing error listener — unhandled WS errors crash the Node.js process
-    socket.on('error', (err) => {
-      console.error(`[WS] Socket error for pilot #${key}:`, err.message)
-      const set = this.clients.get(key)
-      if (set) {
-        set.delete(socket)
-        if (set.size === 0) this.clients.delete(key)
-      }
-    })
-
-    socket.on('close', () => {
+    const cleanupSocket = () => {
       if (socket._heartbeatTimer) {
         clearInterval(socket._heartbeatTimer)
         socket._heartbeatTimer = null
@@ -38,25 +37,42 @@ class WebSocketManager {
       const set = this.clients.get(key)
       if (set) {
         set.delete(socket)
-        if (set.size === 0) this.clients.delete(key)
+        if (set.size === 0) {
+          this.clients.delete(key)
+          if (this._onDisconnectCallback) {
+            this._onDisconnectCallback(key)
+          }
+        }
       }
+    }
+
+    // Escuta de mensagens recebidas do cliente (Telemetria, Chat, Feixes de mineração)
+    socket.on('message', (raw) => {
+      try {
+        const msg = typeof raw === 'string' ? JSON.parse(raw) : JSON.parse(raw.toString())
+        if (msg && msg.type && this._onMessageCallback) {
+          this._onMessageCallback(key, msg, socket, username)
+        }
+      } catch (_) {}
     })
 
-    // FIX BUG-WS3: heartbeat to detect and clean up stale (ghost) connections
+    socket.on('error', (err) => {
+      console.error(`[WS] Socket error for pilot #${key}:`, err.message)
+      cleanupSocket()
+    })
+
+    socket.on('close', () => {
+      cleanupSocket()
+    })
+
     socket._isAlive = true
     socket.on('pong', () => { socket._isAlive = true })
 
     socket._heartbeatTimer = setInterval(() => {
       if (!socket._isAlive) {
         console.warn(`[WS] Pilot #${key} heartbeat timeout — terminating ghost socket`)
-        clearInterval(socket._heartbeatTimer)
-        socket._heartbeatTimer = null
         try { socket.terminate() } catch (_) {}
-        const set = this.clients.get(key)
-        if (set) {
-          set.delete(socket)
-          if (set.size === 0) this.clients.delete(key)
-        }
+        cleanupSocket()
         return
       }
       socket._isAlive = false
@@ -64,8 +80,6 @@ class WebSocketManager {
     }, HEARTBEAT_INTERVAL_MS)
   }
 
-  // FIX BUG-WS4: pass error callback to ws.send() to handle race condition between
-  // readyState check and actual write (connection may close between the two)
   _safeSend(ws, msg) {
     if (ws.readyState !== 1) return // OPEN = 1
     ws.send(msg, (err) => {

@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs')
 const db = require('./database/db')
 const wsManager = require('./websocket/wsManager')
 const simulation = require('./simulation/simulationEngine')
+const spatialManager = require('./multiplayer/spatialManager')
 const { registerRateLimiter } = require('./security/rateLimiter')
 
 const app = Fastify({ logger: true, trustProxy: true })
@@ -106,16 +107,34 @@ app.register(async function (api) {
     }
 
     let pilotId
+    let username = 'Piloto'
     try {
       const decoded = app.jwt.verify(token)
       pilotId = decoded.id
+      username = decoded.sub || 'Piloto'
     } catch (e) {
       try { socket.close(4003, 'Invalid or expired token') } catch (_) {}
       return
     }
 
-    wsManager.registerClient(pilotId, socket)
-    console.log(`[WS] Piloto #${pilotId} conectado via WebSocket`)
+    wsManager.registerClient(pilotId, socket, username)
+    spatialManager.registerPilot(pilotId, username)
+    console.log(`[WS] Piloto #${pilotId} (${username}) conectado via WebSocket`)
+  })
+
+  // Router de Mensagens Multijogador (Telemetria, Mineração, Chat Espacial)
+  wsManager.onMessage((pilotId, msg, socket, username) => {
+    if (msg.type === 'PILOT_TELEMETRY') {
+      spatialManager.updateTelemetry(pilotId, { ...msg.payload, username })
+    } else if (msg.type === 'PILOT_MINING_STATE') {
+      spatialManager.updateMining(pilotId, msg.payload)
+    } else if (msg.type === 'CHAT_MESSAGE') {
+      spatialManager.broadcastChat(pilotId, username, msg.payload?.channel, msg.payload?.text)
+    }
+  })
+
+  wsManager.onDisconnect((pilotId) => {
+    spatialManager.unregisterPilot(pilotId)
   })
 
   // ─── DIAGNOSTIC: TESTE TCP PORTA 587 (SMTP GMAIL) ──────────────────────────
@@ -178,6 +197,7 @@ async function start() {
     console.log('===========================================================')
 
     await simulation.start()
+    spatialManager.start(wsManager)
   } catch (err) {
     app.log.error(err)
     process.exit(1)

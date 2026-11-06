@@ -1,0 +1,260 @@
+/* ==========================================================================
+   HARPIA UNIVERSE - Spatial Multiplayer & Global Chat Styling
+   ========================================================================== */
+
+/* ── CAMADA DE NAVES REMOTAS NO ESPAÇO ── */
+.remote-ships-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 24;
+}
+
+/* ── WRAPPER DA NAVE DE OUTRO JOGADOR (GPU Matrix Composited) ── */
+.remote-ship-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  pointer-events: auto;
+  cursor: crosshair;
+  z-index: 24;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 90px;
+  will-change: transform, width;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  transition: opacity 0.3s ease;
+}
+
+.remote-ship-wrap:hover {
+  filter: drop-shadow(0 0 16px rgba(0, 240, 255, 0.8));
+}
+
+.remote-ship-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: transparent;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 15px rgba(0, 180, 255, 0.45));
+  position: relative;
+  z-index: 2;
+  transform: translateZ(0);
+}
+
+/* ── BADGE FLUTUANTE DE PILOTO REMOTO ── */
+.remote-pilot-badge {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #c8f5ff;
+  letter-spacing: 1.5px;
+  background: rgba(2, 12, 24, 0.88);
+  border: 1px solid rgba(0, 240, 255, 0.45);
+  border-radius: 4px;
+  padding: 3px 8px;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.25), 0 4px 12px rgba(0, 0, 0, 0.6);
+  text-transform: uppercase;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  will-change: transform;
+  z-index: 10;
+}
+
+.remote-pilot-name {
+  color: #00f0ff;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.7);
+}
+
+.remote-pilot-ship-tag {
+  font-size: 0.55rem;
+  color: #72a4c9;
+  letter-spacing: 1px;
+}
+
+/* ── HUD DE CHAT MULTIPLAYER (Canto Inferior Esquerdo) ── */
+.multiplayer-chat-widget {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 500;
+  width: 340px;
+  background: rgba(3, 14, 26, 0.88);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 8px;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.15), 0 8px 32px rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: 'Orbitron', sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  user-select: none;
+}
+
+.multiplayer-chat-widget.minimized {
+  transform: translateY(calc(100% - 38px));
+  opacity: 0.85;
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 240, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  padding: 8px 12px;
+}
+
+.chat-channels {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-channel-btn {
+  background: none;
+  border: none;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #72a4c9;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 3px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.chat-channel-btn:hover {
+  color: #00f0ff;
+}
+
+.chat-channel-btn.active {
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.15);
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.7);
+}
+
+.chat-minimize-btn {
+  background: none;
+  border: none;
+  color: #00f0ff;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  opacity: 0.75;
+  transition: opacity 0.2s;
+}
+
+.chat-minimize-btn:hover {
+  opacity: 1;
+}
+
+.chat-messages-container {
+  height: 150px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 240, 255, 0.4) transparent;
+}
+
+.chat-messages-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-messages-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 240, 255, 0.4);
+  border-radius: 2px;
+}
+
+.chat-message-row {
+  font-size: 0.7rem;
+  line-height: 1.4;
+  word-break: break-word;
+  animation: chatMsgFade 0.25s ease-out;
+}
+
+@keyframes chatMsgFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-time {
+  color: #557996;
+  font-size: 0.6rem;
+  margin-right: 6px;
+}
+
+.chat-sender {
+  color: #00f0ff;
+  font-weight: 700;
+  margin-right: 6px;
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.4);
+}
+
+.chat-text {
+  color: #e6f7ff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 0.78rem;
+}
+
+.chat-input-form {
+  display: flex;
+  border-top: 1px solid rgba(0, 240, 255, 0.2);
+  background: rgba(0, 15, 30, 0.95);
+  padding: 6px 8px;
+  gap: 6px;
+}
+
+.chat-input {
+  flex: 1;
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 4px;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 0.8rem;
+  padding: 6px 8px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.chat-input:focus {
+  border-color: #00f0ff;
+}
+
+.chat-send-btn {
+  background: transparent;
+  border: 1px solid #00f0ff;
+  border-radius: 4px;
+  color: #00f0ff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.chat-send-btn:hover {
+  background: rgba(0, 240, 255, 0.15);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}

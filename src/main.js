@@ -23,6 +23,8 @@ import { MiningImpactEffects } from './systems/MiningImpactEffects.js';
 import { DroneMiningSystem } from './systems/DroneMiningSystem.js';
 import { TacticalOverviewPanel } from './ui/hud/TacticalOverviewPanel.js';
 import { OffScreenRadarMarkers } from './ui/hud/OffScreenRadarMarkers.js';
+import { MultiplayerSystem } from './systems/MultiplayerSystem.js';
+import { MultiplayerChatWidget } from './ui/hud/MultiplayerChatWidget.js';
 import { GalaxyStarmap } from './universe/GalaxyStarmap.js';
 import { InterstellarWarpBanner } from './universe/InterstellarWarpBanner.js';
 import { HOME_SYSTEM_ID, getCurrentSystemId } from './universe/GalaxyData.js';
@@ -276,6 +278,15 @@ export class HarpiaGameEngine {
       this.interstellarWarpBanner.mount(warpMount);
     }
 
+    // ── Subsistema Multijogador Espacial (Naves Remotas & Chat Global) ──
+    this.multiplayerSystem = new MultiplayerSystem({
+      bus: this.bus,
+      localShip: this.ship
+    });
+    this.chatWidget = new MultiplayerChatWidget({ bus: this.bus });
+    this.chatWidget.mount(document.body);
+    this.chatWidget.hide();
+
     const lobbyMount = document.getElementById('lobby-mount') || document.body;
     this.lobbyView = new LobbyView({ eventBus: this.bus });
     this.lobbyView.mount(lobbyMount);
@@ -439,6 +450,11 @@ export class HarpiaGameEngine {
       if (this.renderer) {
         this.renderer.setWarp(this.ship.warpState === 'IN_WARP', this.ship.angle);
       }
+
+      // 9. Atualiza o subsistema multijogador espacial (naves remotas e telemetria)
+      if (this.multiplayerSystem) {
+        this.multiplayerSystem.update(dt);
+      }
     });
 
     // ── Pipeline de Renderização Gráfica Acelerada por GPU ──
@@ -475,6 +491,11 @@ export class HarpiaGameEngine {
         this.droneMiningSystem.getActiveTransfers()
       );
 
+      // 5c. Renderiza as naves dos outros jogadores online no espaço
+      if (this.multiplayerSystem) {
+        this.multiplayerSystem.render(this.camera);
+      }
+
       // 6. Renderiza a nave mineradora H-M2 centrada com rotação suave
       this.ship.render(this.camera);
 
@@ -508,11 +529,18 @@ export class HarpiaGameEngine {
       this.bus.emit(EV.STATION_DOCKED);
     }
 
+    if (this.chatWidget) {
+      this.chatWidget.show();
+    }
+
     this.loop.start();
   }
 
   stop() {
     this.input.disable();
+    if (this.chatWidget) {
+      this.chatWidget.hide();
+    }
     this.loop.stop();
   }
 
