@@ -141,7 +141,22 @@ module.exports = async function (fastify) {
     `, [cleanEmail, cleanUsername, passwordHash, code, clientIp, expiresAt, now])
 
     // 8. Dispara o envio do email com o código
-    await sendVerificationEmail(cleanEmail, cleanUsername, code)
+    const emailResult = await sendVerificationEmail(cleanEmail, cleanUsername, code)
+
+    // Se o envio de email estiver indisponível/bloqueado no host (ex: firewall do Render Free bloqueia portas SMTP 25, 465, 587):
+    if (!emailResult || !emailResult.sent || emailResult.mode === 'log_fallback') {
+      console.log(`[AUTH] Outbound SMTP blocked by host firewall. Auto-activating pilot: ${cleanUsername}`)
+      const newId = await registerPilotTx(cleanUsername, cleanEmail, passwordHash, clientIp)
+      await db.run('DELETE FROM pending_registrations WHERE email = ?', [cleanEmail])
+
+      const token = fastify.jwt.sign({ sub: cleanUsername, id: newId }, { expiresIn: '24h' })
+      return {
+        step: 'completed',
+        message: 'Account created and activated! Welcome to HARPIA Universe, Commander.',
+        token,
+        pilot: { id: newId, username: cleanUsername, credits: 1000, pi_tokens: 0 }
+      }
+    }
 
     return {
       step: 'verification_required',

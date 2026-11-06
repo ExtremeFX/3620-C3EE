@@ -78,7 +78,7 @@ export class ApiClient {
 
     // FIX BUG-API6: add request timeout via AbortController to prevent hanging promises
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15_000); // 15 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 25_000); // 25 second timeout
 
     let res;
     try {

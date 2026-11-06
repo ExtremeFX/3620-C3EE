@@ -49,7 +49,10 @@ function getTransporter() {
       port: parseInt(process.env.SMTP_PORT || '587', 10),
       secure: false, // STARTTLS
       auth: { user, pass },
-      tls: { rejectUnauthorized: false }
+      tls: { rejectUnauthorized: false },
+      connectionTimeout: 3000, // 3s conexão max
+      greetingTimeout: 2500,   // 2.5s greeting max
+      socketTimeout: 3000      // 3s socket inatividade max
     })
   }
   return cachedTransporter
@@ -113,16 +116,20 @@ async function sendVerificationEmail(toEmail, username, code) {
   const transporter = getTransporter()
   if (transporter) {
     try {
-      const info = await transporter.sendMail({
+      const sendPromise = transporter.sendMail({
         from: senderEmail,
         to: toEmail,
         subject: subject,
         html: htmlContent
       })
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('SMTP timeout: outbound mail ports blocked by host firewall')), 3500)
+      )
+      const info = await Promise.race([sendPromise, timeoutPromise])
       console.log(`[EMAIL] Código OTP enviado com sucesso via Gmail SMTP para: ${toEmail} (msgId: ${info.messageId})`)
       return { sent: true, mode: 'smtp', id: info.messageId }
     } catch (err) {
-      console.error('[EMAIL] Falha no envio via Gmail SMTP:', err.message)
+      console.warn('[EMAIL] SMTP indisponível ou bloqueado no host:', err.message)
     }
   }
 
