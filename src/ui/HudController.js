@@ -23,6 +23,7 @@ export class HudController {
     this.targetWorldY = null;
     this.isTargetActive = false;
     this.toastTimeout = null;
+    this.isDocked = false;
 
     this._bindEvents();
   }
@@ -66,16 +67,34 @@ export class HudController {
     });
 
     this.bus.on(EV.STATION_DOCKED, () => {
+      this.isDocked = true;
       if (hangarOverlay) {
         hangarOverlay.classList.add('active');
+      }
+      document.body.classList.add('station-docked');
+      if (this.coordsEl) {
+        this.coordsEl.style.display = 'none';
       }
     });
 
     this.bus.on(EV.STATION_UNDOCK, () => {
+      this.isDocked = false;
       if (hangarOverlay) {
         hangarOverlay.classList.remove('active');
       }
+      document.body.classList.remove('station-docked');
+      if (this.coordsEl) {
+        this.coordsEl.style.display = '';
+      }
       playCinematicImpact(1.0);
+    });
+
+    this.bus.on('game:exit', () => {
+      this.isDocked = false;
+      document.body.classList.remove('station-docked');
+      if (this.coordsEl) {
+        this.coordsEl.style.display = '';
+      }
     });
 
     // ── Botão Superior da HUD para Abrir Mapa Galáctico ──
@@ -105,7 +124,7 @@ export class HudController {
       this.markerEl.style.top = screen.y + 'px';
     }
 
-    if (this.coordsEl) {
+    if (this.coordsEl && !this.isDocked) {
       const wx = Math.round(this.camera.x);
       const wy = Math.round(this.camera.y);
       const currentSys = getGalaxySystem(getCurrentSystemId());

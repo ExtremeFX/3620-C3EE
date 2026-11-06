@@ -34,6 +34,12 @@
   visibility: visible;
 }
 
+/* Ocultar coordenadas de voo espacial quando o jogador está dentro da estação */
+body.station-docked .game-hud-coords,
+body:has(.station-hangar-overlay.active) .game-hud-coords {
+  display: none !important;
+}
+
 .station-hangar-bg {
   position: absolute;
   top: 0;
