@@ -21,6 +21,11 @@ export class MultiplayerSystem {
     this.telemetryInterval = 0.10; // 10 Hz (envio de telemetria a cada 100ms)
     this.telemetryTimer = 0;
 
+    // Estado local de mineração para replicação em rede
+    this.localMiningState = null;
+    this.localDronesActive = false;
+    this.localDroneCount = 0;
+
     this.layerEl = null;
     this._ensureLayer();
     this._bindEvents();
@@ -117,7 +122,51 @@ export class MultiplayerSystem {
     if (this.bus) {
       this.bus.on('system:changed', () => this.clearAll());
       this.bus.on('auth:logout', () => this.clearAll());
+
+      // 7. Eventos locais de mineração para replicação em rede
+      this.bus.on('mining:started', ({ asteroid }) => {
+        this.localMiningState = {
+          isMining: true,
+          asteroidKey: asteroid?.storageKey || null,
+          targetX: asteroid?.x,
+          targetY: asteroid?.y,
+          dronesActive: this.localDronesActive,
+          droneCount: this.localDroneCount
+        };
+        this._broadcastMiningState();
+      });
+
+      this.bus.on('mining:stopped', () => {
+        this.localMiningState = {
+          isMining: false,
+          asteroidKey: null,
+          targetX: null,
+          targetY: null,
+          dronesActive: this.localDronesActive,
+          droneCount: this.localDroneCount
+        };
+        this._broadcastMiningState();
+      });
+
+      this.bus.on('drones:state_changed', ({ isMining, activeCount }) => {
+        this.localDronesActive = Boolean(isMining);
+        this.localDroneCount = activeCount || 0;
+        this.localMiningState = {
+          isMining: Boolean(this.localMiningState?.isMining),
+          asteroidKey: this.localMiningState?.asteroidKey || null,
+          targetX: this.localMiningState?.targetX,
+          targetY: this.localMiningState?.targetY,
+          dronesActive: this.localDronesActive,
+          droneCount: this.localDroneCount
+        };
+        this._broadcastMiningState();
+      });
     }
+  }
+
+  _broadcastMiningState() {
+    if (!wsClient.isConnected) return;
+    wsClient.send('PILOT_MINING_STATE', this.localMiningState || { isMining: false, dronesActive: false });
   }
 
   /**
@@ -168,7 +217,8 @@ export class MultiplayerSystem {
       isDocked: ship.isDocked,
       warpState: ship.warpState,
       activeShipId: ship.shipId,
-      systemId: getCurrentSystemId()
+      systemId: getCurrentSystemId(),
+      mining: this.localMiningState
     });
   }
 

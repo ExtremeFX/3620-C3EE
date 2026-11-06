@@ -38,6 +38,11 @@ export class RemoteShipEntity {
     this.imgEl = null;
     this.thrusterRigs = [];
 
+    // Estruturas de Mineração e Drones Remotos
+    this.laserGroup = null;
+    this.laserElements = null;
+    this.remoteDrones = [];
+
     this._createDomElement();
     this.applyShipSpecs(this.shipId);
   }
@@ -188,6 +193,7 @@ export class RemoteShipEntity {
 
     if (this.isDocked) {
       this.wrapEl.style.display = 'none';
+      this._hideMiningEffects();
       return;
     }
     this.wrapEl.style.display = 'flex';
@@ -207,6 +213,200 @@ export class RemoteShipEntity {
     if (this.badgeEl) {
       this.badgeEl.style.transform = `translateX(-50%) rotate(${-deg}deg)`;
     }
+
+    // Renderiza feixes laser e drones da nave de outro jogador
+    this._renderMiningEffects(camera, scaledWidth);
+  }
+
+  _getTargetCoords() {
+    if (!this.miningTarget) return null;
+    if (this.miningTarget.asteroidKey && window.harpiaAsteroids) {
+      const ast = window.harpiaAsteroids.find(a => a.storageKey === this.miningTarget.asteroidKey);
+      if (ast && !ast.isDepleted) {
+        return { x: ast.x, y: ast.y };
+      }
+    }
+    if (Number.isFinite(this.miningTarget.targetX) && Number.isFinite(this.miningTarget.targetY)) {
+      return { x: this.miningTarget.targetX, y: this.miningTarget.targetY };
+    }
+    return null;
+  }
+
+  _createLaserElements() {
+    const svg = document.getElementById('mining-lasers-layer');
+    if (!svg || this.laserGroup) return;
+
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.id = `remote-laser-${this.id}`;
+    g.setAttribute('class', 'mining-laser-group');
+    g.style.display = 'none';
+
+    g.innerHTML = `
+      <line class="laser-line-glow" x1="0" y1="0" x2="0" y2="0" />
+      <line class="laser-line-core" x1="0" y1="0" x2="0" y2="0" />
+      <line class="laser-line-glow" x1="0" y1="0" x2="0" y2="0" />
+      <line class="laser-line-core" x1="0" y1="0" x2="0" y2="0" />
+    `;
+    svg.appendChild(g);
+
+    const lines = g.querySelectorAll('line');
+    this.laserGroup = g;
+    this.laserElements = {
+      lGlow: lines[0],
+      lCore: lines[1],
+      rGlow: lines[2],
+      rCore: lines[3]
+    };
+  }
+
+  _createDroneElements() {
+    const dronesLayer = document.getElementById('drones-layer');
+    const svgLayer = document.getElementById('mining-lasers-layer');
+    if (!dronesLayer || !svgLayer || this.remoteDrones.length > 0) return;
+
+    for (let i = 0; i < 5; i++) {
+      // 1. Elemento visual HTML do drone
+      const el = document.createElement('div');
+      el.className = 'grok-drone-entity';
+      el.id = `remote-drone-${this.id}-${i}`;
+      el.style.display = 'none';
+      el.style.width = '16px';
+      el.style.height = '16px';
+      el.innerHTML = `
+        <div class="grok-drone-hull">
+          <img src="./assets/items/mining_drone.png" alt="Drone" class="grok-drone-sprite" />
+          <div class="grok-drone-thruster-glow"></div>
+        </div>
+      `;
+      dronesLayer.appendChild(el);
+
+      // 2. Linhas SVG do feixe laser do drone
+      const laserG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      laserG.setAttribute('class', 'grok-drone-laser-unit');
+      laserG.style.display = 'none';
+
+      const glow = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      glow.setAttribute('class', 'grok-laser-glow');
+      const core = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      core.setAttribute('class', 'grok-laser-core');
+      laserG.appendChild(glow);
+      laserG.appendChild(core);
+      svgLayer.appendChild(laserG);
+
+      this.remoteDrones.push({
+        domEl: el,
+        laserGroup: laserG,
+        laserGlow: glow,
+        laserCore: core
+      });
+    }
+  }
+
+  _renderMiningEffects(camera, scaledWidth) {
+    const target = this._getTargetCoords();
+
+    // 1. Feixes Laser da Nave Remota
+    if (this.miningTarget && this.miningTarget.isMining && target) {
+      if (!this.laserGroup) this._createLaserElements();
+
+      if (this.laserGroup && this.laserElements) {
+        this.laserGroup.style.display = 'block';
+
+        const shipScreen = camera.worldToScreen(this.x, this.y);
+        const targetScreen = camera.worldToScreen(target.x, target.y);
+
+        const cos = Math.cos(this.angle);
+        const sin = Math.sin(this.angle);
+        const localX1 = -scaledWidth * 0.22;
+        const localY1 = -scaledWidth * 0.05;
+        const localX2 = scaledWidth * 0.22;
+        const localY2 = -scaledWidth * 0.05;
+
+        const p1x = shipScreen.x + (localX1 * cos - localY1 * sin);
+        const p1y = shipScreen.y + (localX1 * sin + localY1 * cos);
+        const p2x = shipScreen.x + (localX2 * cos - localY2 * sin);
+        const p2y = shipScreen.y + (localX2 * sin + localY2 * cos);
+
+        const t1x = targetScreen.x - 4;
+        const t1y = targetScreen.y - 2;
+        const t2x = targetScreen.x + 4;
+        const t2y = targetScreen.y + 2;
+
+        const { lGlow, lCore, rGlow, rCore } = this.laserElements;
+        lGlow.setAttribute('x1', p1x.toFixed(1));
+        lGlow.setAttribute('y1', p1y.toFixed(1));
+        lGlow.setAttribute('x2', t1x.toFixed(1));
+        lGlow.setAttribute('y2', t1y.toFixed(1));
+
+        lCore.setAttribute('x1', p1x.toFixed(1));
+        lCore.setAttribute('y1', p1y.toFixed(1));
+        lCore.setAttribute('x2', t1x.toFixed(1));
+        lCore.setAttribute('y2', t1y.toFixed(1));
+
+        rGlow.setAttribute('x1', p2x.toFixed(1));
+        rGlow.setAttribute('y1', p2y.toFixed(1));
+        rGlow.setAttribute('x2', t2x.toFixed(1));
+        rGlow.setAttribute('y2', t2y.toFixed(1));
+
+        rCore.setAttribute('x1', p2x.toFixed(1));
+        rCore.setAttribute('y1', p2y.toFixed(1));
+        rCore.setAttribute('x2', t2x.toFixed(1));
+        rCore.setAttribute('y2', t2y.toFixed(1));
+      }
+    } else {
+      if (this.laserGroup) this.laserGroup.style.display = 'none';
+    }
+
+    // 2. Drones Grok da Nave Remota
+    if (this.miningTarget && this.miningTarget.dronesActive && target) {
+      if (this.remoteDrones.length === 0) this._createDroneElements();
+
+      const activeCount = Math.min(5, Math.max(1, this.miningTarget.droneCount || 2));
+      const targetScreen = camera.worldToScreen(target.x, target.y);
+      const nowSec = Date.now() / 1000;
+      const orbitRadius = 90;
+
+      for (let i = 0; i < this.remoteDrones.length; i++) {
+        const drone = this.remoteDrones[i];
+        if (i < activeCount) {
+          const orbitAngle = nowSec * 0.8 + (i * (Math.PI * 2 / activeCount));
+          const droneWorldX = target.x + Math.cos(orbitAngle) * orbitRadius;
+          const droneWorldY = target.y + Math.sin(orbitAngle) * orbitRadius;
+          const droneScreen = camera.worldToScreen(droneWorldX, droneWorldY);
+          const droneDeg = Math.round(orbitAngle * (180 / Math.PI) + 90);
+
+          drone.domEl.style.display = 'block';
+          drone.domEl.style.transform = `translate3d(${Math.round(droneScreen.x)}px, ${Math.round(droneScreen.y)}px, 0) translate(-50%, -50%) rotate(${droneDeg}deg)`;
+
+          drone.laserGroup.style.display = 'block';
+          drone.laserGlow.setAttribute('x1', droneScreen.x.toFixed(1));
+          drone.laserGlow.setAttribute('y1', droneScreen.y.toFixed(1));
+          drone.laserGlow.setAttribute('x2', targetScreen.x.toFixed(1));
+          drone.laserGlow.setAttribute('y2', targetScreen.y.toFixed(1));
+
+          drone.laserCore.setAttribute('x1', droneScreen.x.toFixed(1));
+          drone.laserCore.setAttribute('y1', droneScreen.y.toFixed(1));
+          drone.laserCore.setAttribute('x2', targetScreen.x.toFixed(1));
+          drone.laserCore.setAttribute('y2', targetScreen.y.toFixed(1));
+        } else {
+          drone.domEl.style.display = 'none';
+          drone.laserGroup.style.display = 'none';
+        }
+      }
+    } else {
+      for (const drone of this.remoteDrones) {
+        if (drone.domEl) drone.domEl.style.display = 'none';
+        if (drone.laserGroup) drone.laserGroup.style.display = 'none';
+      }
+    }
+  }
+
+  _hideMiningEffects() {
+    if (this.laserGroup) this.laserGroup.style.display = 'none';
+    for (const drone of this.remoteDrones) {
+      if (drone.domEl) drone.domEl.style.display = 'none';
+      if (drone.laserGroup) drone.laserGroup.style.display = 'none';
+    }
   }
 
   destroy() {
@@ -214,5 +414,14 @@ export class RemoteShipEntity {
       this.wrapEl.remove();
       this.wrapEl = null;
     }
+    if (this.laserGroup) {
+      this.laserGroup.remove();
+      this.laserGroup = null;
+    }
+    for (const drone of this.remoteDrones) {
+      if (drone.domEl) drone.domEl.remove();
+      if (drone.laserGroup) drone.laserGroup.remove();
+    }
+    this.remoteDrones = [];
   }
 }

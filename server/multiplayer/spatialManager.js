@@ -154,6 +154,9 @@ class SpatialMultiplayerManager {
     if (data.systemId && typeof data.systemId === 'string') {
       pilot.systemId = data.systemId
     }
+    if (data.mining !== undefined) {
+      pilot.miningTarget = data.mining
+    }
 
     pilot.lastSeen = Date.now()
   }
@@ -168,12 +171,15 @@ class SpatialMultiplayerManager {
     const pilot = this.pilots.get(key)
     if (!pilot) return
 
-    pilot.miningTarget = miningState && miningState.isMining ? {
-      isMining: true,
+    pilot.miningTarget = miningState && (miningState.isMining || miningState.dronesActive) ? {
+      isMining: Boolean(miningState.isMining),
+      asteroidKey: miningState.asteroidKey || null,
       targetId: miningState.targetId || null,
       oreType: miningState.oreType || 'ferrox',
       targetX: miningState.targetX,
-      targetY: miningState.targetY
+      targetY: miningState.targetY,
+      dronesActive: Boolean(miningState.dronesActive),
+      droneCount: miningState.droneCount || 0
     } : null
 
     // Notificar imediatamente todos os outros pilotos no mesmo sistema

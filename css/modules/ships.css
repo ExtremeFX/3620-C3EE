@@ -80,13 +80,13 @@
 
 /* ── DUAL THRUSTER CONFIG (H-M2) ── */
 /* Turbinas duplas mais finas, estreitas e focadas */
-.center-ship-wrap.dual-thrusters .ship-thruster-rig {
+:is(.center-ship-wrap, .remote-ship-wrap).dual-thrusters .ship-thruster-rig {
   width: 9.5%; /* Mais fininha e proporcional a cada bocal */
   height: 34%;
 }
 
 /* Em modo dual, o thruster principal fica no bocal direito */
-.center-ship-wrap.dual-thrusters .ship-thruster-rig:not(.ship-thruster-rig-2) {
+:is(.center-ship-wrap, .remote-ship-wrap).dual-thrusters .ship-thruster-rig:not(.ship-thruster-rig-2) {
   left: 58%;
   top: 83%;
 }
@@ -110,28 +110,28 @@
   backface-visibility: hidden;
 }
 /* Mostrar thruster-2 apenas em modo dual */
-.center-ship-wrap.dual-thrusters .ship-thruster-rig-2 {
+:is(.center-ship-wrap, .remote-ship-wrap).dual-thrusters .ship-thruster-rig-2 {
   display: flex;
 }
 
 /* Halo e nébula externa contida para não alargar visualmente */
-.center-ship-wrap.dual-thrusters .thruster-outer-glow {
+:is(.center-ship-wrap, .remote-ship-wrap).dual-thrusters .thruster-outer-glow {
   width: 125%;
   filter: blur(3px);
 }
 
 /* Estado thrusting mais pontiagudo e aerodinâmico para ambas as turbinas */
-.center-ship-wrap.dual-thrusters .ship-thruster-rig.thrusting {
+:is(.center-ship-wrap, .remote-ship-wrap).dual-thrusters .ship-thruster-rig.thrusting {
   opacity: 1;
   transform: translateX(-50%) scaleY(1.35) scaleX(0.85);
   transform-origin: top center;
   filter: brightness(1.35);
 }
-.center-ship-wrap.dual-thrusters .ship-thruster-rig.thrusting .thruster-outer-glow {
+:is(.center-ship-wrap, .remote-ship-wrap).dual-thrusters .ship-thruster-rig.thrusting .thruster-outer-glow {
   filter: blur(4.5px);
   background: radial-gradient(ellipse at 50% 15%, rgba(0, 240, 255, 0.95) 0%, rgba(0, 160, 255, 0.75) 45%, rgba(0, 60, 220, 0.35) 75%, transparent 100%);
 }
-.center-ship-wrap.dual-thrusters .ship-thruster-rig.thrusting .thruster-plasma-flame {
+:is(.center-ship-wrap, .remote-ship-wrap).dual-thrusters .ship-thruster-rig.thrusting .thruster-plasma-flame {
   filter: drop-shadow(0 0 9px #00f0ff);
 }
 
@@ -145,20 +145,20 @@
 }
 
 /* ── QUAD THRUSTERS CONFIG (HARPI-T1: 2 Cyan Externos + 2 Laranja Internos) ── */
-.center-ship-wrap.quad-thrusters .ship-thruster-rig:not(.ship-thruster-orange) {
+:is(.center-ship-wrap, .remote-ship-wrap).quad-thrusters .ship-thruster-rig:not(.ship-thruster-orange) {
   width: 7.5% !important;
   height: 33% !important;
 }
 
 /* Bocal esquerdo exterior (Cyan) */
-.center-ship-wrap.quad-thrusters .ship-thruster-rig-2 {
+:is(.center-ship-wrap, .remote-ship-wrap).quad-thrusters .ship-thruster-rig-2 {
   left: 41% !important;
   top: 83% !important;
   display: flex !important;
 }
 
 /* Bocal direito exterior (Cyan) */
-.center-ship-wrap.quad-thrusters .ship-thruster-rig:not(.ship-thruster-rig-2):not(.ship-thruster-orange) {
+:is(.center-ship-wrap, .remote-ship-wrap).quad-thrusters .ship-thruster-rig:not(.ship-thruster-rig-2):not(.ship-thruster-orange) {
   left: 59% !important;
   top: 83% !important;
 }
@@ -183,18 +183,18 @@
   backface-visibility: hidden;
 }
 
-.center-ship-wrap.quad-thrusters .ship-thruster-orange {
+:is(.center-ship-wrap, .remote-ship-wrap).quad-thrusters .ship-thruster-orange {
   display: flex !important;
 }
 
 /* Bocal central esquerdo (Laranja) - chegado para trás (90.5% vs 83% dos azuis) */
-.center-ship-wrap.quad-thrusters .ship-thruster-orange-1 {
+:is(.center-ship-wrap, .remote-ship-wrap).quad-thrusters .ship-thruster-orange-1 {
   left: 47.2% !important;
   top: 90.5% !important;
 }
 
 /* Bocal central direito (Laranja) - chegado para trás (90.5% vs 83% dos azuis) */
-.center-ship-wrap.quad-thrusters .ship-thruster-orange-2 {
+:is(.center-ship-wrap, .remote-ship-wrap).quad-thrusters .ship-thruster-orange-2 {
   left: 52.8% !important;
   top: 90.5% !important;
 }
@@ -207,11 +207,11 @@
 }
 
 /* Nave parada: chama piloto bem encurtada e suave */
-.center-ship-wrap.quad-thrusters .ship-thruster-orange:not(.thrusting) .thruster-outer-glow {
+:is(.center-ship-wrap, .remote-ship-wrap).quad-thrusters .ship-thruster-orange:not(.thrusting) .thruster-outer-glow {
   opacity: 0.45;
   filter: blur(2px);
 }
-.center-ship-wrap.quad-thrusters .ship-thruster-orange:not(.thrusting) .thruster-shock-diamond {
+:is(.center-ship-wrap, .remote-ship-wrap).quad-thrusters .ship-thruster-orange:not(.thrusting) .thruster-shock-diamond {
   opacity: 0.3;
   transform: scale(0.6);
 }
@@ -235,20 +235,20 @@
 }
 
 /* Estado de propulsão ativa nos propulsores laranja (nave a andar: volta ao tamanho normal) */
-.center-ship-wrap.quad-thrusters .ship-thruster-orange.thrusting {
+:is(.center-ship-wrap, .remote-ship-wrap).quad-thrusters .ship-thruster-orange.thrusting {
   opacity: 1;
   transform: translate3d(-50%, 0, 0) scaleY(1.0) scaleX(0.92);
   transform-origin: top center;
   filter: brightness(1.35);
 }
 
-.center-ship-wrap.quad-thrusters .ship-thruster-orange.thrusting .thruster-outer-glow {
+:is(.center-ship-wrap, .remote-ship-wrap).quad-thrusters .ship-thruster-orange.thrusting .thruster-outer-glow {
   opacity: 1;
   filter: blur(5.5px);
   background: radial-gradient(ellipse at 50% 15%, rgba(255, 160, 0, 1) 0%, rgba(255, 90, 0, 0.85) 45%, rgba(200, 30, 0, 0.45) 75%, transparent 100%);
 }
 
-.center-ship-wrap.quad-thrusters .ship-thruster-orange.thrusting .thruster-plasma-flame {
+:is(.center-ship-wrap, .remote-ship-wrap).quad-thrusters .ship-thruster-orange.thrusting .thruster-plasma-flame {
   filter: drop-shadow(0 0 14px #ff6600);
 }
 
