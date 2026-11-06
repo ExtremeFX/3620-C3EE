@@ -1,17 +1,60 @@
 'use strict'
 
+const fs = require('fs')
+const path = require('path')
 const crypto = require('crypto')
+const nodemailer = require('nodemailer')
+
+// Simple fallback .env parser for local dev
+try {
+  const envPath = path.join(__dirname, '..', '..', '.env')
+  if (fs.existsSync(envPath)) {
+    const raw = fs.readFileSync(envPath, 'utf8')
+    raw.split(/\r?\n/).forEach((line) => {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith('#')) return
+      const idx = trimmed.indexOf('=')
+      if (idx > 0) {
+        const key = trimmed.slice(0, idx).trim()
+        const val = trimmed.slice(idx + 1).trim()
+        if (!process.env[key]) {
+          process.env[key] = val
+        }
+      }
+    })
+  }
+} catch (_) {}
 
 /**
  * HARPIA Universe - Email Service & Verification Dispatcher
- * 
+ *
  * Envia emails com código OTP de 6 dígitos formatados com tema Sci-Fi.
- * Suporta Resend API (3000 emails/mês grátis com 1 chave) ou fallback com registo em log.
+ * Suporta:
+ * 1. Gmail SMTP (porta 587 STARTTLS) — envia para qualquer email no mundo
+ * 2. Resend API
+ * 3. Log Fallback seguro
  */
 
-/**
- * Gera código numérico seguro de 6 dígitos
- */
+let cachedTransporter = null
+
+function getTransporter() {
+  const user = process.env.GMAIL_USER || process.env.SMTP_USER || 'harpiauniverse@gmail.com'
+  const pass = (process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS || '').replace(/\s+/g, '')
+
+  if (!user || !pass) return null
+
+  if (!cachedTransporter) {
+    cachedTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587', 10),
+      secure: false, // STARTTLS
+      auth: { user, pass },
+      tls: { rejectUnauthorized: false }
+    })
+  }
+  return cachedTransporter
+}
+
 function generateOtpCode() {
   return crypto.randomInt(100000, 999999).toString()
 }
@@ -24,9 +67,7 @@ function generateOtpCode() {
  * @returns {Promise<{ sent: boolean, mode: string, error?: string }>}
  */
 async function sendVerificationEmail(toEmail, username, code) {
-  const resendApiKey = process.env.RESEND_API_KEY
-  const senderEmail = process.env.EMAIL_FROM || 'HARPIA Universe <onboarding@resend.dev>'
-
+  const senderEmail = process.env.EMAIL_FROM || 'HARPIA Universe <harpiauniverse@gmail.com>'
   const subject = `[HARPIA Universe] Código de Verificação do Piloto: ${code}`
   const htmlContent = `
     <!DOCTYPE html>
@@ -52,7 +93,7 @@ async function sendVerificationEmail(toEmail, username, code) {
           <div class="subtitle">Comando Central de Alistamento de Pilotos</div>
         </div>
         <p class="greeting">Olá, futuro piloto <strong>${username}</strong>!</p>
-        <p class="greeting">Para ativares a tua conta e receberes a tua primeira nave no hangar de HARPIA PRIME, introduz o seguinte código de segurança de 6 dígitos no jogo:</p>
+        <p class="greeting">Para ativares a tua conta e receberes a tua primeira nave no hangar de HARPIA BASE, introduz o seguinte código de segurança de 6 dígitos no jogo:</p>
         
         <div class="code-container">
           <div class="code-box">${code}</div>
@@ -68,7 +109,25 @@ async function sendVerificationEmail(toEmail, username, code) {
     </html>
   `
 
-  // Se a chave da Resend estiver configurada no Hostless
+  // 1. Prioridade: Gmail / SMTP (entrega universal para qualquer caixa de correio)
+  const transporter = getTransporter()
+  if (transporter) {
+    try {
+      const info = await transporter.sendMail({
+        from: senderEmail,
+        to: toEmail,
+        subject: subject,
+        html: htmlContent
+      })
+      console.log(`[EMAIL] Código OTP enviado com sucesso via Gmail SMTP para: ${toEmail} (msgId: ${info.messageId})`)
+      return { sent: true, mode: 'smtp', id: info.messageId }
+    } catch (err) {
+      console.error('[EMAIL] Falha no envio via Gmail SMTP:', err.message)
+    }
+  }
+
+  // 2. Fallback: Resend API (se estiver configurado)
+  const resendApiKey = process.env.RESEND_API_KEY
   if (resendApiKey) {
     try {
       const controller = new AbortController()
@@ -93,17 +152,15 @@ async function sendVerificationEmail(toEmail, username, code) {
       const data = await response.json()
 
       if (response.ok) {
-        console.log(`[EMAIL] Código de verificação enviado com sucesso via Resend para: ${toEmail}`)
+        console.log(`[EMAIL] Código de verificação enviado via Resend para: ${toEmail}`)
         return { sent: true, mode: 'resend', id: data.id }
-      } else {
-        console.warn('[EMAIL] Resend retornou erro:', data)
       }
     } catch (err) {
       console.error('[EMAIL] Erro de ligação com a Resend:', err.message)
     }
   }
 
-  // Fallback seguro: regista nos logs do servidor (Hostless Logs)
+  // 3. Fallback final: Log no servidor
   console.log('===========================================================')
   console.log(`[EMAIL-VERIFY] Piloto: ${username} | Email: ${toEmail}`)
   console.log(`[EMAIL-VERIFY] CÓDIGO DE VERIFICAÇÃO (OTP): >>> ${code} <<<`)
