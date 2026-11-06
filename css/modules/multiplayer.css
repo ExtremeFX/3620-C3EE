@@ -46,7 +46,7 @@
   transform: translateZ(0);
 }
 
-/* ── BADGE FLUTUANTE DE PILOTO REMOTO ── */
+/* ── BADGE FLUTUANTE DE PILOTO REMOTO (Exibida exclusivamente em hover sobre a nave) ── */
 .remote-pilot-badge {
   position: absolute;
   bottom: calc(100% + 14px);
@@ -58,30 +58,31 @@
   font-weight: 700;
   color: #c8f5ff;
   letter-spacing: 1.5px;
-  background: rgba(2, 12, 24, 0.88);
+  background: rgba(2, 12, 24, 0.90);
   border: 1px solid rgba(0, 240, 255, 0.45);
   border-radius: 4px;
-  padding: 3px 8px;
+  padding: 4px 10px;
   box-shadow: 0 0 14px rgba(0, 240, 255, 0.25), 0 4px 12px rgba(0, 0, 0, 0.6);
   text-transform: uppercase;
   pointer-events: none;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  will-change: transform;
+  justify-content: center;
+  will-change: transform, opacity;
   z-index: 10;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.2s ease;
+}
+
+.remote-ship-wrap:hover .remote-pilot-badge {
+  opacity: 1;
+  visibility: visible;
 }
 
 .remote-pilot-name {
   color: #00f0ff;
   text-shadow: 0 0 8px rgba(0, 240, 255, 0.7);
-}
-
-.remote-pilot-ship-tag {
-  font-size: 0.55rem;
-  color: #72a4c9;
-  letter-spacing: 1px;
 }
 
 /* ── HUD DE CHAT MULTIPLAYER (Canto Inferior Esquerdo) ── */

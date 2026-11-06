@@ -47,13 +47,10 @@ export class RemoteShipEntity {
     wrap.className = 'remote-ship-wrap';
     wrap.id = `remote-ship-${this.id}`;
 
-    // Badge flutuante do nome do piloto e modelo da nave
+    // Badge flutuante do nome do piloto (exibida apenas ao passar o rato)
     const badge = document.createElement('div');
     badge.className = 'remote-pilot-badge';
-    badge.innerHTML = `
-      <span class="remote-pilot-name">${this.username}</span>
-      <span class="remote-pilot-ship-tag">${this.shipId}</span>
-    `;
+    badge.innerHTML = `<span class="remote-pilot-name">${this.username}</span>`;
 
     // Imagem da fuselagem da nave
     const img = document.createElement('img');
@@ -79,11 +76,6 @@ export class RemoteShipEntity {
 
     if (info && info.hullSpan) {
       this.baseWidth = info.hullSpan;
-    }
-
-    const shipTag = this.badgeEl?.querySelector('.remote-pilot-ship-tag');
-    if (shipTag) {
-      shipTag.textContent = info.name || shipId;
     }
 
     this._renderThrusters(info);
@@ -150,6 +142,12 @@ export class RemoteShipEntity {
     this.isDocked = Boolean(data.doc);
     this.warpState = data.wrp || 'IDLE';
     this.miningTarget = data.min || null;
+
+    if (data.name && data.name !== this.username) {
+      this.username = data.name;
+      const nameEl = this.badgeEl?.querySelector('.remote-pilot-name');
+      if (nameEl) nameEl.textContent = this.username;
+    }
 
     if (data.shp && data.shp !== this.shipId) {
       this.applyShipSpecs(data.shp);
