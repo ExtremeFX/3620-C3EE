@@ -1,12 +1,16 @@
-FROM node:20-alpine
+# Use debian-slim to bust corrupted Alpine layer cache on Hostless BuildKit
+FROM node:20-bookworm-slim
 
 WORKDIR /app
 
-# Dependências de produção
+# Cache busting argument
+ARG CACHE_DATE=2026-11-06-T1345
+
+# Instalar dependências de produção
 COPY package*.json ./
 RUN npm ci --omit=dev
 
-# Código fonte da aplicação
+# Copiar ficheiros da aplicação
 COPY . .
 
 ENV NODE_ENV=production
