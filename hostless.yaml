@@ -1,5 +1,5 @@
 build:
-  command: "npm install"
+  command: "npm ci --omit=dev"
 system: auto
 min_cpu: 0.5
 max_cpu: 2
