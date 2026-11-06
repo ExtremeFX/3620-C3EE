@@ -198,6 +198,8 @@ const db = {
       CREATE INDEX IF NOT EXISTS idx_pilots_created_ip      ON pilots(created_ip);
     `)
 
+    await client.execute("DELETE FROM hangar_ships WHERE ship_id = 'H-7M' OR ship_id = 'H-M1'").catch(() => {})
+
     console.log('[DB] Turso schema verified and synchronized!')
   }
 }

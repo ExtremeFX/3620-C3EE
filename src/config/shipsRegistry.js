@@ -28,21 +28,6 @@ export const SHIPS_REGISTRY = {
       { id: 'right', left: '58%', top: '83%', width: '9.5%', height: '34%', color: 'cyan', idleScale: 1.0 }
     ]
   },
-  'H-7M': {
-    id: 'H-7M',
-    name: 'LIGHT MINER H-7M',
-    class: 'MINING',
-    description: 'Agile asteroid prospector with rapid traversal engines.',
-    capacity: 70,
-    turnRate: 3.4,
-    mediaType: 'image',
-    imageSrc: 'assets/ships/MINING SHIPS/H-M2.png',
-    thumbnail: 'assets/ships/MINING SHIPS/H-M2.png',
-    thrustersCount: 1,
-    thrusters: [
-      { id: 'main', left: '50%', top: '86%', width: '18%', height: '32%', color: 'cyan', idleScale: 1.0 }
-    ]
-  },
   'HARPI-T1': {
     id: 'HARPI-T1',
     name: 'HARPI-T1',
@@ -102,8 +87,8 @@ export function getShipInfo(shipId) {
   if (SHIPS_REGISTRY[normalized]) {
     return SHIPS_REGISTRY[normalized];
   }
-  // Se for H-M1 antigo, mapear suavemente para H-M2
-  if (upper === 'H-M1' || upper === 'HM1') {
+  // Se for H-M1 ou H-7M antigo, mapear suavemente para H-M2
+  if (upper === 'H-M1' || upper === 'HM1' || upper === 'H-7M' || upper === 'H7M') {
     return SHIPS_REGISTRY['H-M2'];
   }
   // Fallback seguro apenas para variações explícitas de HARPI-T1

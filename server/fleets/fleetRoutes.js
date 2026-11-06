@@ -22,7 +22,6 @@ function safeStorageCol(raw) {
 const CANONICAL_CAPACITIES = Object.freeze({
   'H-M2': 200,
   'HARPI-T1': 1000,
-  'H-7M': 70,
   'T-WS-Cargi': 500
 })
 
@@ -52,7 +51,11 @@ module.exports = async function (fastify) {
       await db.run("INSERT INTO hangar_ships (pilot_id, ship_id, quantity, location, cargo_json) VALUES (?, 'H-M2', 1, 'BASE', ?)", [pilotId, defaultCargo])
     }
 
-    const ships = await db.all('SELECT ship_id, quantity, in_mission, location, cargo_json FROM hangar_ships WHERE pilot_id = ?', [pilotId])
+    // Purgar de forma permanente qualquer referência legada a H-7M ou H-M1
+    await db.run("DELETE FROM hangar_ships WHERE ship_id = 'H-7M' OR ship_id = 'H-M1'").catch(() => {})
+
+    const rawShips = await db.all('SELECT ship_id, quantity, in_mission, location, cargo_json FROM hangar_ships WHERE pilot_id = ?', [pilotId])
+    const ships = rawShips.filter(s => s.ship_id !== 'H-7M' && s.ship_id !== 'H-M1')
     const storageRow = await db.get('SELECT ferrox, crynex, varelium, core_v2, h_m2, mining_drone, max_storage FROM pilot_storage WHERE pilot_id = ?', [pilotId])
     const storage = storageRow || { ferrox: 0, crynex: 0, varelium: 0, core_v2: 0, h_m2: 0, mining_drone: 5, max_storage: 70000 }
     const missions = await db.all("SELECT * FROM active_missions WHERE pilot_id = ? AND phase != 'DOCKED'", [pilotId])

@@ -56,7 +56,7 @@ class GameSimulationEngine {
             newPhase = 'DOCKED_AT_MARKET'
           }
         } else {
-          // Frotas de Mineração Industrial (H-7M)
+          // Frotas de Mineração Industrial (H-M2)
           if (now < m.mining_started_at) {
             newPhase = 'OUTBOUND'
           } else if (now < m.mining_ends_at) {

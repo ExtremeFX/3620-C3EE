@@ -16,7 +16,6 @@ async function registerPilotTx(username, email, hash, clientIp) {
     const newId = info.lastInsertRowid
 
     await tx.run("INSERT INTO hangar_ships (pilot_id, ship_id, quantity) VALUES (?, 'H-M2', 1)", [newId])
-    await tx.run("INSERT INTO hangar_ships (pilot_id, ship_id, quantity) VALUES (?, 'H-7M', 5)", [newId])
     await tx.run("INSERT INTO hangar_ships (pilot_id, ship_id, quantity) VALUES (?, 'T-WS-Cargi', 1)", [newId])
     await tx.run('INSERT INTO pilot_storage (pilot_id, ferrox, crynex, varelium, mining_drone) VALUES (?, 0, 0, 0, 0)', [newId])
 

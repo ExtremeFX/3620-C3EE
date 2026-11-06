@@ -44,7 +44,7 @@ const _state = {
   sectorDeposits: [],
   sectorDepositsMap: {},
   selectedTargetCell: null,
-  selectedShipId: 'H-7M',
+  selectedShipId: 'T-WS-Cargi',
   launchQuantity: 1,
   mapHoveredCol: -1,
   mapHoveredRow: -1,
@@ -496,9 +496,10 @@ export function setFleetMissions(missions) {
 }
 
 export function setHangarShips(ships) {
-  _state.pilotHangarShips = ships;
-  emit('hangar:updated', ships);
-  emit('hangar:ships_updated', ships);
+  const safeShips = Array.isArray(ships) ? ships.filter(s => s && s.ship_id !== 'H-7M' && s.ship_id !== 'H-M1') : [];
+  _state.pilotHangarShips = safeShips;
+  emit('hangar:updated', safeShips);
+  emit('hangar:ships_updated', safeShips);
 }
 
 export function setDeposits(deposits) {
