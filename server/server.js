@@ -37,7 +37,8 @@ app.register(require('@fastify/cors'), {
       ALLOWED_ORIGINS.includes(origin) ||
       ALLOWED_ORIGINS.includes('*') ||
       origin.endsWith('.hostless.app') ||
-      origin.endsWith('.hostless.cloud')
+      origin.endsWith('.hostless.cloud') ||
+      origin.endsWith('.onrender.com')
     ) {
       return cb(null, true)
     }
