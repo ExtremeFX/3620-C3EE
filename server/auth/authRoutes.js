@@ -95,20 +95,20 @@ module.exports = async function (fastify) {
 
     // 4. Validação dos tipos e comprimentos de username e password
     if (typeof username !== 'string' || typeof password !== 'string') {
-      return reply.code(400).send({ detail: 'Nome de piloto e palavra-passe devem ser texto' })
+      return reply.code(400).send({ detail: 'Pilot callsign and password must be strings' })
     }
     const cleanUsername = username.trim()
     if (!cleanUsername || !password) {
-      return reply.code(400).send({ detail: 'Nome de piloto e palavra-passe são obrigatórios' })
+      return reply.code(400).send({ detail: 'Pilot callsign and password are required' })
     }
     if (cleanUsername.length < 3 || cleanUsername.length > 24) {
-      return reply.code(400).send({ detail: 'Nome de piloto deve ter entre 3 e 24 carateres' })
+      return reply.code(400).send({ detail: 'Pilot callsign must be between 3 and 24 characters' })
     }
     if (!/^[a-zA-Z0-9_-]+$/.test(cleanUsername)) {
-      return reply.code(400).send({ detail: 'Nome de piloto só pode conter letras, números, hífen e underscore' })
+      return reply.code(400).send({ detail: 'Callsign may only contain letters, numbers, hyphens, and underscores' })
     }
     if (password.length < 6 || password.length > 128) {
-      return reply.code(400).send({ detail: 'A palavra-passe deve ter entre 6 e 128 carateres' })
+      return reply.code(400).send({ detail: 'Password must be between 6 and 128 characters' })
     }
 
     // 5. Verificação de existência prévia na base de dados
@@ -117,7 +117,7 @@ module.exports = async function (fastify) {
       [cleanUsername, cleanEmail]
     )
     if (existing) {
-      return reply.code(409).send({ detail: 'Nome de piloto ou email já se encontram em uso' })
+      return reply.code(409).send({ detail: 'Callsign or email address is already in use' })
     }
 
     // 6. Geração do código OTP de 6 dígitos e hash seguro da password
@@ -145,7 +145,7 @@ module.exports = async function (fastify) {
 
     return {
       step: 'verification_required',
-      message: 'Código de verificação enviado! Verifica a tua caixa de correio eletrónico.',
+      message: 'Verification code sent! Please check your email inbox or spam folder.',
       email: cleanEmail
     }
   })
@@ -156,7 +156,7 @@ module.exports = async function (fastify) {
     const clientIp = getClientIp(req)
 
     if (!email || typeof email !== 'string' || !code || typeof code !== 'string') {
-      return reply.code(400).send({ detail: 'Email e código de verificação são obrigatórios' })
+      return reply.code(400).send({ detail: 'Email and verification code are required' })
     }
 
     const cleanEmail = email.trim().toLowerCase()
@@ -164,26 +164,26 @@ module.exports = async function (fastify) {
 
     const pending = await db.get('SELECT * FROM pending_registrations WHERE email = ?', [cleanEmail])
     if (!pending) {
-      return reply.code(400).send({ detail: 'Nenhum registo pendente encontrado para este email. Inicia o registo novamente.' })
+      return reply.code(400).send({ detail: 'No pending registration found for this email. Please restart registration.' })
     }
 
     // Valida expiração (15 minutos)
     if (Date.now() > pending.expires_at) {
       await db.run('DELETE FROM pending_registrations WHERE email = ?', [cleanEmail])
-      return reply.code(400).send({ detail: 'O código de verificação expirou. Por favor solicita um novo código.' })
+      return reply.code(400).send({ detail: 'Verification code has expired. Please request a new code.' })
     }
 
     // Valida se excedeu número de tentativas erradas (máx 5)
     if (pending.attempts >= 5) {
       await db.run('DELETE FROM pending_registrations WHERE email = ?', [cleanEmail])
-      return reply.code(429).send({ detail: 'Demasiadas tentativas incorretas. O registo foi cancelado por segurança.' })
+      return reply.code(429).send({ detail: 'Too many invalid attempts. Registration cancelled for security.' })
     }
 
     // Valida o código
     if (pending.code !== cleanCode) {
       await db.run('UPDATE pending_registrations SET attempts = attempts + 1 WHERE email = ?', [cleanEmail])
       const remaining = 5 - (pending.attempts + 1)
-      return reply.code(400).send({ detail: `Código incorreto. Tens mais ${remaining} tentativa(s).` })
+      return reply.code(400).send({ detail: `Incorrect code. ${remaining} attempt(s) remaining.` })
     }
 
     // Re-valida limites por IP antes de criar
@@ -200,7 +200,7 @@ module.exports = async function (fastify) {
     } catch (e) {
       if (e.message && e.message.includes('UNIQUE constraint')) {
         await db.run('DELETE FROM pending_registrations WHERE email = ?', [cleanEmail])
-        return reply.code(409).send({ detail: 'Nome de piloto ou email já foram registados.' })
+        return reply.code(409).send({ detail: 'Pilot callsign or email has already been registered.' })
       }
       throw e
     }
@@ -210,7 +210,7 @@ module.exports = async function (fastify) {
 
     const token = fastify.jwt.sign({ sub: pending.username, id: newId }, { expiresIn: '24h' })
     return {
-      message: 'Conta ativada com sucesso! Bem-vindo a HARPIA Universe.',
+      message: 'Account verified and activated! Welcome to HARPIA Universe.',
       token,
       pilot: { id: newId, username: pending.username, credits: 1000, pi_tokens: 0 }
     }
@@ -220,20 +220,20 @@ module.exports = async function (fastify) {
   fastify.post('/auth/register/resend', { config: RATE_LIMIT_STRICT_AUTH }, async (req, reply) => {
     const { email } = req.body || {}
     if (!email || typeof email !== 'string') {
-      return reply.code(400).send({ detail: 'Email é obrigatório' })
+      return reply.code(400).send({ detail: 'Email is required' })
     }
 
     const cleanEmail = email.trim().toLowerCase()
     const pending = await db.get('SELECT * FROM pending_registrations WHERE email = ?', [cleanEmail])
     if (!pending) {
-      return reply.code(400).send({ detail: 'Nenhum registo pendente encontrado para este email.' })
+      return reply.code(400).send({ detail: 'No pending registration found for this email address.' })
     }
 
     // Limita reenvio a 1 vez a cada 60 segundos
     const now = Date.now()
     if (now - pending.created_at < 60 * 1000) {
       const waitSec = Math.ceil((60 * 1000 - (now - pending.created_at)) / 1000)
-      return reply.code(429).send({ detail: `Aguarda ${waitSec} segundos antes de solicitar novo código.` })
+      return reply.code(429).send({ detail: `Please wait ${waitSec} seconds before requesting a new code.` })
     }
 
     const newCode = generateOtpCode()
@@ -246,7 +246,7 @@ module.exports = async function (fastify) {
 
     await sendVerificationEmail(cleanEmail, pending.username, newCode)
 
-    return { message: 'Novo código de verificação enviado para a tua caixa de correio.' }
+    return { message: 'New verification code dispatched to your inbox.' }
   })
 
   // ─── ME ───────────────────────────────────────────────────────────────────

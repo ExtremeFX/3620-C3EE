@@ -60,22 +60,22 @@ function getClientIp(req) {
  */
 function validateEmail(email) {
   if (!email || typeof email !== 'string') {
-    return { valid: false, error: 'O email é obrigatório para registar um piloto.' }
+    return { valid: false, error: 'Email is required to register a pilot.' }
   }
 
   const cleanEmail = email.trim().toLowerCase()
 
   if (cleanEmail.length > 254) {
-    return { valid: false, error: 'O email é demasiado longo (máximo 254 carateres).' }
+    return { valid: false, error: 'Email is too long (maximum 254 characters).' }
   }
 
   if (!EMAIL_REGEX.test(cleanEmail)) {
-    return { valid: false, error: 'O formato do email introduzido não é válido.' }
+    return { valid: false, error: 'Invalid email address format.' }
   }
 
   const parts = cleanEmail.split('@')
   if (parts.length !== 2) {
-    return { valid: false, error: 'O formato do email introduzido não é válido.' }
+    return { valid: false, error: 'Invalid email address format.' }
   }
 
   const domain = parts[1]
@@ -83,7 +83,7 @@ function validateEmail(email) {
   if (DISPOSABLE_EMAIL_DOMAINS.has(domain)) {
     return {
       valid: false,
-      error: 'Emails temporários / descartáveis não são permitidos no HARPIA Universe.'
+      error: 'Temporary or disposable email domains are strictly prohibited in HARPIA Universe.'
     }
   }
 
@@ -108,12 +108,12 @@ async function checkIpRegistrationLimits(client, ip) {
     })
     const totalCount = totalResult.rows[0]?.count ?? 0
 
-    console.log(`[AntiMultiAccount] Verificando registo para IP: "${ip}". Contas existentes: ${totalCount}`)
+    console.log(`[AntiMultiAccount] Verifying registration for IP: "${ip}". Existing accounts: ${totalCount}`)
 
     if (totalCount >= LIMITS.MAX_TOTAL_PER_IP) {
       return {
         allowed: false,
-        error: 'Já existe uma conta de piloto registada a partir desta rede. Multi-contas não são permitidas.'
+        error: 'A pilot account is already registered from this network. Multi-accounting is strictly prohibited.'
       }
     }
 
@@ -127,11 +127,11 @@ async function checkIpRegistrationLimits(client, ip) {
     if (recentCount >= LIMITS.MAX_PER_DAY) {
       return {
         allowed: false,
-        error: 'Limite de criação de contas atingido. Só é permitida 1 conta por dia a partir desta rede.'
+        error: 'Registration limit reached. Only 1 account per day is allowed from this network.'
       }
     }
   } catch (err) {
-    console.warn('[AntiMultiAccount] Aviso ao verificar limites de IP:', err.message)
+    console.warn('[AntiMultiAccount] Warning checking IP limits:', err.message)
     return { allowed: true }
   }
 

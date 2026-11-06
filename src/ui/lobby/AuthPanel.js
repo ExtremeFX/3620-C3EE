@@ -76,18 +76,18 @@ export class AuthPanel extends UIComponent {
       <!-- FORMULÁRIO 3: VERIFICAÇÃO DE EMAIL (OTP 6 DÍGITOS) -->
       <form id="verify-form" class="auth-form">
         <div style="text-align: center; margin-bottom: 4px;">
-          <div style="color: #00f0ff; font-family: 'Orbitron', sans-serif; font-size: 0.78rem; letter-spacing: 2px; font-weight: 700;">VERIFICAÇÃO DE EMAIL</div>
-          <div style="font-size: 0.72rem; color: #8cb0cc; margin-top: 5px; line-height: 1.4;" id="verify-email-text">Enviámos um código de 6 dígitos para o teu email.</div>
-          <div style="font-size: 0.68rem; color: #f0a500; margin-top: 6px; line-height: 1.4;">⚠️ Não encontras o email? Verifica a pasta de <strong>Spam</strong> ou <strong>Correio Indesejado</strong>.</div>
+          <div style="color: #00f0ff; font-family: 'Orbitron', sans-serif; font-size: 0.78rem; letter-spacing: 2px; font-weight: 700;">EMAIL VERIFICATION</div>
+          <div style="font-size: 0.72rem; color: #8cb0cc; margin-top: 5px; line-height: 1.4;" id="verify-email-text">We sent a 6-digit access code to your email.</div>
+          <div style="font-size: 0.68rem; color: #f0a500; margin-top: 6px; line-height: 1.4;">⚠️ Can't find the email? Check your <strong>Spam</strong> or <strong>Junk</strong> folder.</div>
         </div>
         <div class="input-group" style="margin-top: 6px;">
-          <label>Código de 6 Dígitos</label>
+          <label>6-Digit Access Code</label>
           <input type="text" name="otp_code" placeholder="123456" maxlength="6" required autocomplete="one-time-code" style="text-align: center; letter-spacing: 8px; font-size: 1.25rem; font-weight: bold; font-family: 'Orbitron', monospace;">
         </div>
-        <button type="submit" class="auth-btn" style="margin-top: 10px;">ATIVAR CONTA</button>
+        <button type="submit" class="auth-btn" style="margin-top: 10px;">ACTIVATE ACCOUNT</button>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 0.7rem;">
-          <button type="button" id="btn-resend-code" style="background: none; border: none; color: #00f0ff; text-decoration: underline; cursor: pointer; padding: 0;">Reenviar código</button>
-          <button type="button" id="btn-back-register" style="background: none; border: none; color: #78a6c8; cursor: pointer; padding: 0;">Alterar dados</button>
+          <button type="button" id="btn-resend-code" style="background: none; border: none; color: #00f0ff; text-decoration: underline; cursor: pointer; padding: 0;">Resend code</button>
+          <button type="button" id="btn-back-register" style="background: none; border: none; color: #78a6c8; cursor: pointer; padding: 0;">Edit details</button>
         </div>
       </form>
 
@@ -178,7 +178,7 @@ export class AuthPanel extends UIComponent {
       if (this.verifyForm) {
         this.verifyForm.classList.add('active');
         const textEl = this.verifyForm.querySelector('#verify-email-text');
-        if (textEl) textEl.textContent = `Código de 6 dígitos enviado para: ${email}`;
+        if (textEl) textEl.textContent = `6-digit access code sent to: ${email}`;
         const inputEl = this.verifyForm.querySelector('input[name="otp_code"]');
         if (inputEl) {
           inputEl.value = '';
@@ -253,20 +253,20 @@ export class AuthPanel extends UIComponent {
     const username = (uInput?.value || '').trim();
     const password = pInput?.value || '';
 
-    this._setMessage('A autenticar...', '');
+    this._setMessage('Authenticating...', '');
 
     try {
       const data = await api.login(username, password);
       api.setToken(data.token);
       api.setUser(data.pilot);
 
-      this._setMessage('Acesso autorizado!', 'ok');
+      this._setMessage('Access authorized!', 'ok');
 
       if (typeof this.onSuccess === 'function') {
         this.onSuccess(data.pilot);
       }
     } catch (err) {
-      this._setMessage(err.message || 'Erro de autenticação', 'error');
+      this._setMessage(err.message || 'Authentication error', 'error');
     }
   }
 
@@ -281,16 +281,16 @@ export class AuthPanel extends UIComponent {
     const password = pInput?.value || '';
 
     if (!username || !email || !password) {
-      this._setMessage('Preenche o nome de piloto, email e palavra-passe', 'error');
+      this._setMessage('Please fill in pilot callsign, email and password', 'error');
       return;
     }
 
     if (password.length < 6) {
-      this._setMessage('A palavra-passe deve ter no mínimo 6 caracteres', 'error');
+      this._setMessage('Password must have at least 6 characters', 'error');
       return;
     }
 
-    this._setMessage('A enviar código de verificação...', '');
+    this._setMessage('Transmitting verification code...', '');
 
     try {
       const turnstileField = this.registerForm.querySelector('[name="cf-turnstile-response"]');
@@ -298,18 +298,18 @@ export class AuthPanel extends UIComponent {
       const res = await api.register(username, email, password, token);
 
       if (res && res.step === 'verification_required') {
-        this._setMessage(res.message || 'Código enviado com sucesso!', 'ok');
+        this._setMessage(res.message || 'Verification code sent successfully!', 'ok');
         this.showVerificationView(email);
       } else if (res && res.token) {
         api.setToken(res.token);
         api.setUser(res.pilot);
-        this._setMessage('Conta criada com sucesso!', 'ok');
+        this._setMessage('Account created successfully!', 'ok');
         if (typeof this.onSuccess === 'function') {
           this.onSuccess(res.pilot);
         }
       }
     } catch (err) {
-      this._setMessage(err.message || 'Erro ao processar registo', 'error');
+      this._setMessage(err.message || 'Registration failed', 'error');
       // Só reinicia o turnstile se o erro for especificamente do token anti-bot
       if (err.message && err.message.toLowerCase().includes('turnstile') && window.turnstile && this.turnstileWidgetId !== null) {
         try { window.turnstile.reset(this.turnstileWidgetId); } catch (_) {}
@@ -323,24 +323,24 @@ export class AuthPanel extends UIComponent {
     const code = (codeInput?.value || '').trim();
 
     if (!code || code.length < 6) {
-      this._setMessage('Por favor introduz o código de 6 dígitos completo', 'error');
+      this._setMessage('Please enter the complete 6-digit code', 'error');
       return;
     }
 
-    this._setMessage('A verificar código...', '');
+    this._setMessage('Verifying security code...', '');
 
     try {
       const data = await api.verifyEmailCode(this.pendingEmail, code);
       api.setToken(data.token);
       api.setUser(data.pilot);
 
-      this._setMessage('Conta verificada e ativada!', 'ok');
+      this._setMessage('Account verified and activated!', 'ok');
 
       if (typeof this.onSuccess === 'function') {
         this.onSuccess(data.pilot);
       }
     } catch (err) {
-      this._setMessage(err.message || 'Código incorreto ou expirado', 'error');
+      this._setMessage(err.message || 'Invalid or expired code', 'error');
     }
   }
 
@@ -348,13 +348,13 @@ export class AuthPanel extends UIComponent {
     e.preventDefault();
     if (!this.pendingEmail) return;
 
-    this._setMessage('A reenviar novo código...', '');
+    this._setMessage('Requesting new security code...', '');
 
     try {
       const res = await api.resendVerificationCode(this.pendingEmail);
-      this._setMessage(res.message || 'Novo código enviado para o teu email!', 'ok');
+      this._setMessage(res.message || 'New code sent to your email!', 'ok');
     } catch (err) {
-      this._setMessage(err.message || 'Erro ao reenviar código', 'error');
+      this._setMessage(err.message || 'Error resending code', 'error');
     }
   }
 

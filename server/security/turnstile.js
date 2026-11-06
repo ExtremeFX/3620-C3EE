@@ -38,7 +38,7 @@ async function verifyTurnstileToken(token, remoteIp) {
     }
     return {
       success: false,
-      error: 'Por favor resolve a verificação de segurança Cloudflare Turnstile anti-bot.'
+      error: 'Please complete the Cloudflare Turnstile anti-bot security verification.'
     }
   }
 
@@ -70,20 +70,20 @@ async function verifyTurnstileToken(token, remoteIp) {
       return { success: true }
     }
 
-    console.warn('[Turnstile] Falha na validação do token Cloudflare:', outcome['error-codes'] || outcome)
+    console.warn('[Turnstile] Cloudflare token validation failure:', outcome['error-codes'] || outcome)
     return {
       success: false,
-      error: 'Falha na verificação de segurança anti-bot. Atualiza a página e tenta novamente.'
+      error: 'Anti-bot verification failed. Please refresh the page and try again.'
     }
   } catch (err) {
-    console.error('[Turnstile] Erro ao comunicar com Cloudflare Turnstile:', err.message)
+    console.error('[Turnstile] Error communicating with Cloudflare Turnstile:', err.message)
     // Em caso de indisponibilidade extrema do serviço da Cloudflare em dev/teste, não bloqueia utilizador
     if (secretKey === DEFAULT_SECRET_KEY) {
       return { success: true }
     }
     return {
       success: false,
-      error: 'Serviço de verificação anti-bot temporariamente indisponível. Tenta novamente.'
+      error: 'Security verification service temporarily unavailable. Please try again.'
     }
   }
 }

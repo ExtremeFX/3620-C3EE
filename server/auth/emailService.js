@@ -68,7 +68,7 @@ function generateOtpCode() {
  */
 async function sendVerificationEmail(toEmail, username, code) {
   const senderEmail = process.env.EMAIL_FROM || 'HARPIA Universe <harpiauniverse@gmail.com>'
-  const subject = `[HARPIA Universe] Código de Verificação do Piloto: ${code}`
+  const subject = `[HARPIA Universe] Pilot Verification Access Code: ${code}`
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -90,19 +90,19 @@ async function sendVerificationEmail(toEmail, username, code) {
       <div class="card">
         <div class="header">
           <h1 class="title">HARPIA UNIVERSE</h1>
-          <div class="subtitle">Comando Central de Alistamento de Pilotos</div>
+          <div class="subtitle">Central Command — Pilot Enlistment</div>
         </div>
-        <p class="greeting">Olá, futuro piloto <strong>${username}</strong>!</p>
-        <p class="greeting">Para ativares a tua conta e receberes a tua primeira nave no hangar de HARPIA BASE, introduz o seguinte código de segurança de 6 dígitos no jogo:</p>
+        <p class="greeting">Greetings, Commander <strong>${username}</strong>!</p>
+        <p class="greeting">To activate your flight credentials and claim your starter ship in the HARPIA BASE hangar, enter the following 6-digit access code into the game terminal:</p>
         
         <div class="code-container">
           <div class="code-box">${code}</div>
         </div>
         
-        <p class="greeting" style="font-size: 13px; color: #8cb0cc;">Este código expira dentro de <strong>15 minutos</strong>. Se não solicitaste a criação desta conta, podes ignorar esta mensagem com total segurança.</p>
+        <p class="greeting" style="font-size: 13px; color: #8cb0cc;">This security clearance code expires in <strong>15 minutes</strong>. If you did not request this transmission, you can safely disregard it.</p>
         
         <div class="footer">
-          © HARPIA Universe — MMORPG Espacial de Ficção Científica
+          © HARPIA Universe — Sci-Fi Space MMORPG
         </div>
       </div>
     </body>
