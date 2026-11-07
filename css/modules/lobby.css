@@ -64,7 +64,7 @@
   display: block;
   pointer-events: none;
   background: transparent;
-  filter: drop-shadow(0 0 20px rgba(0, 180, 255, 0.2));
+  filter: drop-shadow(0 0 25px rgba(0, 0, 0, 0.75));
 }
 
 /* ── AUTH PANEL ── */
@@ -917,3 +917,4 @@
 body.in-game .codex-lobby-trigger {
   display: none !important;
 }
+
