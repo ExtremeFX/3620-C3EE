@@ -10,6 +10,7 @@ import { LogoCanvas } from '../logo/LogoCanvas.js';
 import { AuthPanel } from './AuthPanel.js';
 import { DailyRewardWidget } from './DailyRewardWidget.js';
 import { UserProfileBar } from './UserProfileBar.js';
+import { CodexModal } from './CodexModal.js';
 
 export class LobbyView extends UIComponent {
   /**
@@ -33,6 +34,7 @@ export class LobbyView extends UIComponent {
       eventBus: eventBus,
       onLogout: () => this.handleLogout()
     });
+    this.codexModal = new CodexModal({ eventBus: this.bus });
 
     this.playGameWrap = null;
     this.bannerRightEl = null;
@@ -59,6 +61,7 @@ export class LobbyView extends UIComponent {
     this.dailyReward.mount(wrapper);
     this.authPanel.mount(wrapper);
     this.userProfile.mount(wrapper);
+    this.codexModal.mount(wrapper);
 
     // Play Game Button
     const playWrap = document.createElement('div');
@@ -274,5 +277,6 @@ export class LobbyView extends UIComponent {
     this.authPanel.destroy();
     this.dailyReward.destroy();
     this.userProfile.destroy();
+    if (this.codexModal) this.codexModal.destroy();
   }
 }
