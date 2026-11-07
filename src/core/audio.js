@@ -281,39 +281,108 @@ export function playEtherealChord(rootFreq = 220, duration = 1.8, gainLevel = 0.
 }
 
 /**
- * Bloqueio de Alvo Holográfico (Substitui o bip retro por ressonância cristalina)
+ * Clique Tático Holográfico Sublime (Subtle & High-Tech Sci-Fi Haptic Tap)
+ * Som discreto, aveludado e elegante para seleção de contactos/alvos no HUD tático.
+ * Arquitetura de dupla camada: micro-impulso háptico de vidro + corpo sub-táctil aveludado.
+ */
+export function playTacticalSelectSound() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const sfxBus = _getSfxBus() || ctx.destination;
+
+    // ── Camada 1: Impulso Háptico Holográfico (Glass Micro-Impulse) ──
+    const oscImpulse = ctx.createOscillator();
+    const gainImpulse = ctx.createGain();
+    const filterImpulse = ctx.createBiquadFilter();
+
+    oscImpulse.type = 'sine';
+    // Micro-pitch descendente ultra-rápido: 2100Hz -> 1250Hz em 16ms
+    oscImpulse.frequency.setValueAtTime(2100, now);
+    oscImpulse.frequency.exponentialRampToValueAtTime(1250, now + 0.016);
+
+    filterImpulse.type = 'bandpass';
+    filterImpulse.frequency.setValueAtTime(1600, now);
+    filterImpulse.Q.setValueAtTime(2.0, now);
+
+    gainImpulse.gain.setValueAtTime(0.0001, now);
+    gainImpulse.gain.linearRampToValueAtTime(0.045, now + 0.002);
+    gainImpulse.gain.exponentialRampToValueAtTime(0.0001, now + 0.028);
+
+    oscImpulse.connect(filterImpulse);
+    filterImpulse.connect(gainImpulse);
+    gainImpulse.connect(sfxBus);
+
+    oscImpulse.start(now);
+    oscImpulse.stop(now + 0.035);
+
+    // ── Camada 2: Ressonância Suave de Cockpit (Velvety Tactile Body) ──
+    const oscBody = ctx.createOscillator();
+    const gainBody = ctx.createGain();
+    const filterBody = ctx.createBiquadFilter();
+
+    oscBody.type = 'sine';
+    // Frequência suave: 480Hz -> 320Hz em 35ms (peso tátil sem rispidez)
+    oscBody.frequency.setValueAtTime(480, now);
+    oscBody.frequency.exponentialRampToValueAtTime(320, now + 0.035);
+
+    filterBody.type = 'lowpass';
+    filterBody.frequency.setValueAtTime(750, now);
+
+    gainBody.gain.setValueAtTime(0.0001, now);
+    gainBody.gain.linearRampToValueAtTime(0.035, now + 0.003);
+    gainBody.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+
+    oscBody.connect(filterBody);
+    filterBody.connect(gainBody);
+    gainBody.connect(sfxBus);
+
+    oscBody.start(now);
+    oscBody.stop(now + 0.05);
+  } catch (e) {}
+}
+
+/**
+ * Bloqueio de Alvo Holográfico (Harmónico cristalino de alta fidelidade e suave)
  */
 export function playTargetLockSound() {
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
     const now = ctx.currentTime;
+    const sfxBus = _getSfxBus() || ctx.destination;
 
     // Frequência harmónica Solfeggio 528Hz + harmónico superior 1056Hz
     const osc1 = ctx.createOscillator();
     const osc2 = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
     const gain = ctx.createGain();
 
     osc1.type = 'sine';
     osc1.frequency.setValueAtTime(528, now);
-    osc1.frequency.exponentialRampToValueAtTime(792, now + 0.14);
+    osc1.frequency.exponentialRampToValueAtTime(792, now + 0.12);
 
-    osc2.type = 'triangle';
+    osc2.type = 'sine';
     osc2.frequency.setValueAtTime(1056, now);
-    osc2.frequency.exponentialRampToValueAtTime(1584, now + 0.14);
+    osc2.frequency.exponentialRampToValueAtTime(1320, now + 0.12);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1800, now);
 
     gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.14, now + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+    gain.gain.linearRampToValueAtTime(0.055, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
 
-    osc1.connect(gain);
-    osc2.connect(gain);
-    gain.connect(_getSfxBus() || ctx.destination);
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gain);
+    gain.connect(sfxBus);
 
     osc1.start(now);
     osc2.start(now);
-    osc1.stop(now + 0.3);
-    osc2.stop(now + 0.3);
+    osc1.stop(now + 0.2);
+    osc2.stop(now + 0.2);
   } catch (e) {}
 }
 

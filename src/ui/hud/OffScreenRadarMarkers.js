@@ -7,7 +7,6 @@
  */
 import { UIComponent } from '../core/UIComponent.js';
 import { EV } from '../../core/EventBus.js';
-import { playTargetLockSound } from '../../core/audio.js';
 
 export class OffScreenRadarMarkers extends UIComponent {
   /**
@@ -135,7 +134,6 @@ export class OffScreenRadarMarkers extends UIComponent {
       el.addEventListener('mouseup', (e) => e.stopPropagation());
       el.addEventListener('click', (e) => {
         e.stopPropagation();
-        playTargetLockSound();
         if (this.overview) {
           this.overview.selectTargetById(t.overviewId);
         } else {

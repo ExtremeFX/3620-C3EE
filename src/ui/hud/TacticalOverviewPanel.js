@@ -8,7 +8,7 @@
  */
 import { UIComponent } from '../core/UIComponent.js';
 import { EV } from '../../core/EventBus.js';
-import { playTargetLockSound } from '../../core/audio.js';
+import { playTacticalSelectSound } from '../../core/audio.js';
 
 export class TacticalOverviewPanel extends UIComponent {
   /**
@@ -279,7 +279,7 @@ export class TacticalOverviewPanel extends UIComponent {
    */
   selectTarget(target) {
     this.selectedTarget = target;
-    playTargetLockSound();
+    playTacticalSelectSound();
 
     if (this.bus) {
       this.bus.emit('target:locked', { target });
@@ -393,14 +393,20 @@ export class TacticalOverviewPanel extends UIComponent {
           <span class="col-units ov-units-text ${c.isDepleted ? 'depleted' : ''}">${c.status}</span>
         `;
 
+        let lastSelectTs = 0;
         const handleSelect = (e) => {
           e.stopPropagation();
+          // Previne disparo duplo de pointerdown seguido de click na mesma interação
+          const now = performance.now();
+          if (now - lastSelectTs < 120) return;
+          lastSelectTs = now;
+
           if (row._contact) {
             this.selectTarget(row._contact);
           }
         };
 
-        // Registo duplo (pointerdown + click) para resposta instantânea a 0ms sem falhas de clique
+        // Registo duplo (pointerdown + click) com guard temporal para resposta tátil instantânea sem repetição
         row.addEventListener('pointerdown', handleSelect);
         row.addEventListener('click', handleSelect);
 
