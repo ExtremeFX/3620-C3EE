@@ -1,7 +1,6 @@
 /**
  * HARPIA Universe - CodexModal (Option 1: Interactive Holographic Game Intel Terminal)
- * Terminal futurista interativo que apresenta todas as funcionalidades, gameplay
- * e especificações do jogo em detalhe, sem ocupar espaço permanente no lobby.
+ * High-tech interactive terminal showcasing gameplay, mechanics, ships, and economy in English.
  */
 import { UIComponent } from '../core/UIComponent.js';
 import { playSciFiBeep, playTargetLockSound } from '../../core/audio.js';
@@ -18,7 +17,7 @@ export class CodexModal extends UIComponent {
     this.isOpen = false;
     this.activeTab = 'flight'; // 'flight' | 'mining' | 'station' | 'market'
 
-    // Nós DOM
+    // DOM Nodes
     this.triggerBtn = null;
     this.overlayEl = null;
     this.modalEl = null;
@@ -30,12 +29,12 @@ export class CodexModal extends UIComponent {
   mount(container) {
     if (this.root) return;
 
-    // 1. Botão Holográfico no Lobby (Canto Inferior Esquerdo)
+    // 1. Holographic Trigger Button in Lobby (Bottom-Left)
     const trigger = document.createElement('button');
     trigger.type = 'button';
     trigger.className = 'codex-lobby-trigger';
     trigger.id = 'codex-lobby-trigger';
-    trigger.title = 'Aceder aos Arquivos e Guia de Voo de HARPIA';
+    trigger.title = 'Access HARPIA Archives & Flight Intel';
     trigger.innerHTML = `
       <div class="codex-trigger-glow"></div>
       <div class="codex-trigger-icon">🛰️</div>
@@ -46,7 +45,7 @@ export class CodexModal extends UIComponent {
       <div class="codex-trigger-corner"></div>
     `;
 
-    // 2. Modal Holográfico Central (Oculto por defeito)
+    // 2. Central Holographic Modal (Hidden by default)
     const overlay = document.createElement('div');
     overlay.className = 'codex-overlay hidden';
     overlay.id = 'codex-modal-overlay';
@@ -54,7 +53,7 @@ export class CodexModal extends UIComponent {
     overlay.innerHTML = `
       <div class="codex-backdrop"></div>
       <div class="codex-modal">
-        <!-- Moldura SVG Holográfica com Cantos Chanfrados -->
+        <!-- Holographic SVG Frame with Chamfered Corners -->
         <svg class="codex-svg-frame" viewBox="0 0 960 640" preserveAspectRatio="none">
           <defs>
             <filter id="codex-glow" x="-20%" y="-20%" width="140%" height="140%">
@@ -73,7 +72,7 @@ export class CodexModal extends UIComponent {
           <line x1="948" y1="40" x2="948" y2="90" stroke="#00f0ff" stroke-width="2" />
         </svg>
 
-        <!-- Cabeçalho do Terminal -->
+        <!-- Terminal Header -->
         <div class="codex-header">
           <div class="codex-header-title">
             <span class="codex-status-pulse"></span>
@@ -82,35 +81,35 @@ export class CodexModal extends UIComponent {
               <span class="codex-subtitle">CENTRAL ARCHIVES • SHIP REGISTRY • FLIGHT MANUAL</span>
             </div>
           </div>
-          <button type="button" class="codex-close-btn" id="codex-close-btn" title="Fechar [ESC]">
+          <button type="button" class="codex-close-btn" id="codex-close-btn" title="Close [ESC]">
             <span>✕</span> ESC
           </button>
         </div>
 
-        <!-- Barra de Abas de Navegação -->
+        <!-- Navigation Tabs -->
         <nav class="codex-nav-tabs" id="codex-nav-tabs">
           <button type="button" class="codex-tab-btn active" data-tab="flight">
-            <span class="tab-icon">🛸</span> PILOTAGEM & VOO
+            <span class="tab-icon">🛸</span> FLIGHT & COCKPIT
           </button>
           <button type="button" class="codex-tab-btn" data-tab="mining">
-            <span class="tab-icon">⛏️</span> MINERAÇÃO & DRONES
+            <span class="tab-icon">⛏️</span> MINING & DRONES
           </button>
           <button type="button" class="codex-tab-btn" data-tab="station">
-            <span class="tab-icon">🏢</span> ESTAÇÃO & FROTAS
+            <span class="tab-icon">🏢</span> STATION & FLEET
           </button>
           <button type="button" class="codex-tab-btn" data-tab="market">
-            <span class="tab-icon">📈</span> MERCADO & REDE
+            <span class="tab-icon">📈</span> MARKET & NETWORK
           </button>
         </nav>
 
-        <!-- Corpo de Conteúdo Dinâmico -->
+        <!-- Dynamic Body Content -->
         <div class="codex-body" id="codex-body-content">
-          <!-- Renderizado via _renderTabContent() -->
+          <!-- Rendered dynamically via _renderTabContent() -->
         </div>
 
-        <!-- Rodapé do Terminal -->
+        <!-- Terminal Footer -->
         <div class="codex-footer">
-          <span class="codex-footer-hint">DICA: Podes abrir e consultar este guia a qualquer momento no ecrã inicial.</span>
+          <span class="codex-footer-hint">INTEL: You can open this codex at any time from the main lobby screen.</span>
           <span class="codex-footer-badge">SECTOR SEC-0014 • HARPIA PRIME</span>
         </div>
       </div>
@@ -132,7 +131,7 @@ export class CodexModal extends UIComponent {
   }
 
   bindEvents() {
-    // Abrir Modal
+    // Open Modal
     if (this.triggerBtn) {
       this.triggerBtn.addEventListener('click', () => {
         playTargetLockSound();
@@ -143,7 +142,7 @@ export class CodexModal extends UIComponent {
       });
     }
 
-    // Fechar Modal
+    // Close Modal
     if (this.closeBtn) {
       this.closeBtn.addEventListener('click', () => {
         playSciFiBeep(440, 0.08, 'triangle', 0.15);
@@ -151,7 +150,7 @@ export class CodexModal extends UIComponent {
       });
     }
 
-    // Clique fora do modal fecha
+    // Click outside closes modal
     if (this.overlayEl) {
       this.overlayEl.addEventListener('click', (e) => {
         if (e.target === this.overlayEl || e.target.classList.contains('codex-backdrop')) {
@@ -160,7 +159,7 @@ export class CodexModal extends UIComponent {
       });
     }
 
-    // Tecla ESC fecha
+    // ESC key closes modal
     const onKeyDown = (e) => {
       if (e.key === 'Escape' && this.isOpen) {
         this.close();
@@ -169,7 +168,7 @@ export class CodexModal extends UIComponent {
     window.addEventListener('keydown', onKeyDown);
     this.addCleanup(() => window.removeEventListener('keydown', onKeyDown));
 
-    // Abas de Navegação
+    // Tab buttons
     if (this.tabsContainer) {
       const tabButtons = this.tabsContainer.querySelectorAll('.codex-tab-btn');
       tabButtons.forEach((btn) => {
@@ -216,47 +215,47 @@ export class CodexModal extends UIComponent {
       case 'flight':
         this.contentBody.innerHTML = `
           <div class="codex-section-intro">
-            <h3>🛸 SISTEMAS DE VOO & COCKPIT TÁTICO</h3>
-            <p>Comanda naves industriais e logísticas com física de inércia espacial completa, controlos vetoriais e instrumentação holográfica em tempo real.</p>
+            <h3>🛸 FLIGHT DYNAMICS & TACTICAL COCKPIT</h3>
+            <p>Command heavy industrial and logistical vessels with true Newtonian inertia, omnidirectional vector thrusters, and real-time holographic telemetry.</p>
           </div>
 
           <div class="codex-grid">
             <div class="codex-card">
-              <div class="codex-card-tag">CONTROLO VETORIAL 360°</div>
-              <h4>Dinâmica de Voo e Propulsão</h4>
-              <p>Pilotagem com aceleração linear progressiva, taxa de viragem angular precisa e desaceleração inercial. Os propulsores de plasma adaptam a esteira de voo conforme a manobra.</p>
+              <div class="codex-card-tag">360° VECTOR THRUST</div>
+              <h4>Flight Physics & Propulsion</h4>
+              <p>Full 360-degree pilot control with progressive linear acceleration, calibrated angular turn rate, and inertial drift. Dual plasma engine trails dynamically respond to throttle and maneuvering.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">Cruzeiro: 110 m/s</span>
-                <span class="codex-pill">Vel. Máxima: 400 m/s</span>
+                <span class="codex-pill">Cruise: 110 m/s</span>
+                <span class="codex-pill">Max Velocity: 400 m/s</span>
               </div>
             </div>
 
             <div class="codex-card">
-              <div class="codex-card-tag">INSTRUMENTAÇÃO HOLOGRÁFICA</div>
-              <h4>Cockpit & HUD Integrada</h4>
-              <p>Anéis visuais dedicados à monitorização contínua de integridade do <strong>Escudo (Shield)</strong> e <strong>Casco (Hull)</strong>, velocímetro circular e bússola galáctica orbital.</p>
+              <div class="codex-card-tag">HOLOGRAPHIC INSTRUMENTATION</div>
+              <h4>Integrated Cockpit HUD</h4>
+              <p>Dedicated circular telemetry monitors tracking real-time <strong>Shield</strong> and <strong>Hull</strong> integrity, orbital speed gauge, approach crosshairs, and navigational compass.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">Proteção Bi-Camada</span>
-                <span class="codex-pill">Interface Dinâmica</span>
+                <span class="codex-pill">Dual-Layer Defense</span>
+                <span class="codex-pill">Dynamic Telemetry</span>
               </div>
             </div>
 
             <div class="codex-card">
-              <div class="codex-card-tag">RADAR DE SETOR</div>
-              <h4>Painel Tático (Tactical Overview)</h4>
-              <p>Registo permanente de corpos celestes e instalações. Seleciona qualquer campo de asteroides ou estação para traçar vetores imediatos de aproximação (<strong>Approach</strong>).</p>
+              <div class="codex-card-tag">SECTOR RADAR</div>
+              <h4>Tactical Overview Panel</h4>
+              <p>Live contacts registry scanning celestial bodies and deep space infrastructure. Select any asteroid field, station, or waypoint to lock and engage direct <strong>Approach</strong> vectors.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">Radar Longo Alcance</span>
-                <span class="codex-pill">Autotravamento</span>
+                <span class="codex-pill">Long-Range Radar</span>
+                <span class="codex-pill">Auto Target Lock</span>
               </div>
             </div>
 
             <div class="codex-card">
-              <div class="codex-card-tag">TELEMETRIA ORBITAL</div>
-              <h4>Coordenadas & Navegação Galáctica</h4>
-              <p>Localização espacial exata exibida no topo do ecrã com identificação do setor e coordenadas X / Y em tempo real. Oculta de forma inteligente quando atracado em doca.</p>
+              <div class="codex-card-tag">ORBITAL TELEMETRY</div>
+              <h4>Galactic Coords & Star Map</h4>
+              <p>Real-time spatial telemetry displayed at the top HUD showing sector code, planetary orbit, and exact X/Y coordinates. Automatically hidden inside station docks.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">Tecla [M] Mapa Galáctico</span>
+                <span class="codex-pill">Key [M] Galaxy Map</span>
                 <span class="codex-pill">SEC-0014 Prime</span>
               </div>
             </div>
@@ -267,49 +266,49 @@ export class CodexModal extends UIComponent {
       case 'mining':
         this.contentBody.innerHTML = `
           <div class="codex-section-intro">
-            <h3>⛏️ MINERAÇÃO INDUSTRIAL & ESQUADRÃO DE DRONES</h3>
-            <p>Extrai as maiores jazidas do cosmos através de lasers de plasma de alta voltagem e comanda esquadrões de drones Grok autónomos com inteligência tática.</p>
+            <h3>⛏️ INDUSTRIAL EXTRACTION & DRONE SQUADRON</h3>
+            <p>Strip mineral-rich celestial asteroids using high-output plasma lasers, and command autonomous Grok drone swarms with tactical cooperative AI.</p>
           </div>
 
           <div class="codex-grid">
             <div class="codex-card">
-              <div class="codex-card-tag">LASERS DE ALTO RENDIMENTO</div>
-              <h4>Feixes de Plasma Duplos</h4>
-              <p>Instalados em torres frontais reforçadas, operam com alcance de até <strong>2.000 metros</strong>. Cada ciclo de 30 segundos extrai 2 unidades brutas depositadas diretamente no porão de carga.</p>
+              <div class="codex-card-tag">HIGH-YIELD BEAMS</div>
+              <h4>Dual Plasma Mining Lasers</h4>
+              <p>Forward-mounted heavy emitters with an effective range of <strong>2,000 meters</strong>. Each 30-second cycle yields 2 raw ore units deposited directly into the ship's hold.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">Alcance: 2.000m</span>
-                <span class="codex-pill">Ciclo: 30 Segundos</span>
+                <span class="codex-pill">Range: 2,000m</span>
+                <span class="codex-pill">Cycle: 30s / 2 Units</span>
               </div>
             </div>
 
             <div class="codex-card">
-              <div class="codex-card-tag">ESQUADRÃO AUTÓNOMO</div>
+              <div class="codex-card-tag">AUTONOMOUS SQUADRON</div>
               <h4>Grok Mining Drones</h4>
-              <p>Unidades de suporte autónomo equipadas em baía dedicada. Descolam da nave mãe, estabelecem órbita tática e deslocam-se autonomamente até aos asteroides para extração por laser próprio.</p>
+              <p>Unmanned extraction support craft housed in the ship's drone bay. Drones deploy, orbit in defensive escort, and autonomously navigate to target asteroids with independent laser beams.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">Ciclo: 20 Segundos</span>
-                <span class="codex-pill">Até 5 Drones na H-M2</span>
+                <span class="codex-pill">Cycle: 20 Seconds</span>
+                <span class="codex-pill">Up to 5 on H-M2</span>
               </div>
             </div>
 
             <div class="codex-card">
-              <div class="codex-card-tag">MODOS DE OPERAÇÃO</div>
-              <h4>Comandos FOCUS & SPLIT</h4>
-              <p><strong>FOCUS:</strong> Concentra todo o enxame de drones num único asteroide para quebra instantânea de reservas.<br>
-              <strong>SPLIT:</strong> Os drones dividem-se de forma inteligente e simultânea por múltiplos asteroides, cobrindo o cinturão por inteiro.</p>
+              <div class="codex-card-tag">TACTICAL COMMANDS</div>
+              <h4>FOCUS & SPLIT Modes</h4>
+              <p><strong>FOCUS:</strong> Orders the entire drone swarm to concentrate firepower on a single asteroid for rapid resource depletion.<br>
+              <strong>SPLIT:</strong> Swarm intelligently disperses across multiple celestial asteroids simultaneously.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">Comutação Instantânea</span>
-                <span class="codex-pill">IA Cooperativa</span>
+                <span class="codex-pill">One-Click Toggle</span>
+                <span class="codex-pill">Cooperative AI</span>
               </div>
             </div>
 
             <div class="codex-card">
-              <div class="codex-card-tag">CATÁLOGO DE MINÉRIOS</div>
-              <h4>Matérias-Primas do Cosmos</h4>
+              <div class="codex-card-tag">CELESTIAL ORE ROSTER</div>
+              <h4>Cosmic Raw Commodities</h4>
               <div class="codex-minerals-list">
-                <div class="mineral-item"><strong style="color:#8cb0cc;">FERROX (FER):</strong> Estruturas e cascos industriais.</div>
-                <div class="mineral-item"><strong style="color:#00f0ff;">CRYNEX (CRY):</strong> Cristais quânticos para reatores e lasers.</div>
-                <div class="mineral-item"><strong style="color:#00ffaa;">VARELIUM (VAR):</strong> Isótopo exótico de altíssimo valor de mercado.</div>
+                <div class="mineral-item"><strong style="color:#8cb0cc;">FERROX (FER):</strong> Dense structural ore for hulls and space station modules.</div>
+                <div class="mineral-item"><strong style="color:#00f0ff;">CRYNEX (CRY):</strong> High-energy quantum crystal for reactor cores and plasma lasers.</div>
+                <div class="mineral-item"><strong style="color:#00ffaa;">VARELIUM (VAR):</strong> Ultra-rare exotic isotope commanding premium regional market value.</div>
               </div>
             </div>
           </div>
@@ -319,50 +318,50 @@ export class CodexModal extends UIComponent {
       case 'station':
         this.contentBody.innerHTML = `
           <div class="codex-section-intro">
-            <h3>🏢 ESTAÇÃO ESPACIAL, LOGÍSTICA & FROTAS</h3>
-            <p>Gerencia as tuas embarcações e mercadorias na doca orbital através de terminais integrados de carga e um avançado centro de montagem.</p>
+            <h3>🏢 ORBITAL DOCK, LOGISTICS & FLEET MANAGEMENT</h3>
+            <p>Manage vessels and cargo at the station orbital terminal featuring dual side-by-side consoles and a full 3D assembly yard.</p>
           </div>
 
           <div class="codex-grid">
             <div class="codex-card">
-              <div class="codex-card-tag">CONSOLA DUPLA LADO A LADO</div>
-              <h4>Terminal Integrado de Carga (20px)</h4>
-              <p>Posicionado de forma ergonómica à direita:<br>
-              • <strong>Box da Nave (Esquerda):</strong> Carga de minérios + Baía de Drones Grok integrados.<br>
-              • <strong>Cofre da Estação (Direita):</strong> Silo de alta segurança com capacidade para <strong>500.000 Toneladas</strong>.</p>
+              <div class="codex-card-tag">SIDE-BY-SIDE DUAL CONSOLE</div>
+              <h4>Integrated Cargo Terminal (20px Gap)</h4>
+              <p>Ergonomic dual-dock layout positioned on the right:<br>
+              • <strong>Ship Console (Left):</strong> Ship Ore Storage + Grok Drone Bay in a single integrated HUD.<br>
+              • <strong>Station Vault (Right):</strong> Heavy-duty permanent storage with <strong>500,000 Ton</strong> capacity.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">Drag & Drop Bidirecional</span>
-                <span class="codex-pill">Shift + Drag Dividir</span>
+                <span class="codex-pill">Two-Way Drag & Drop</span>
+                <span class="codex-pill">Shift + Drag Split</span>
               </div>
             </div>
 
             <div class="codex-card">
-              <div class="codex-card-tag">CENTRO DE MONTAGEM</div>
-              <h4>Visualizador 3D & Ship Specs</h4>
-              <p>Inspeciona a tua nave sobre a plataforma rotativa em alta definição na aba <strong>ASSEMBLY</strong>. Consulta especificações completas de blindagem, propulsores, lasers e volume de porão.</p>
+              <div class="codex-card-tag">ASSEMBLY YARD</div>
+              <h4>3D Viewport & Ship Specs</h4>
+              <p>Inspect your active vessel on the rotating orbital platform in the <strong>ASSEMBLY</strong> tab. Review comprehensive technical metrics including armor, shields, turn rate, and cargo hold.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">Plataforma Assembly</span>
-                <span class="codex-pill">Métricas Oficiais</span>
+                <span class="codex-pill">Assembly Mode</span>
+                <span class="codex-pill">Official Specs</span>
               </div>
             </div>
 
             <div class="codex-card">
-              <div class="codex-card-tag">NAVE INDUSTRIAL PESADA</div>
+              <div class="codex-card-tag">HEAVY INDUSTRIAL MINER</div>
               <h4>MINING SHIP H-M2</h4>
-              <p>A espinha dorsal das operações industriais. Equipada com porão de <strong>200 Toneladas</strong>, 2 lasers de plasma integrados e baía com capacidade para <strong>5 drones Grok</strong> prontos a atuar.</p>
+              <p>The industrial workhorse of HARPIA Universe. Outfitted with a <strong>200-Ton</strong> ore hold, dual forward plasma lasers, and a dedicated bay accommodating up to <strong>5 Grok mining drones</strong>.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">200T Hold</span>
-                <span class="codex-pill">5 Drones</span>
+                <span class="codex-pill">200T Ore Hold</span>
+                <span class="codex-pill">5 Drone Bay</span>
               </div>
             </div>
 
             <div class="codex-card">
-              <div class="codex-card-tag">CARGUEIRO DE TRANSPORTE</div>
+              <div class="codex-card-tag">BULK TRANSPORT FREIGHTER</div>
               <h4>FREIGHTER T-WS-CARGI</h4>
-              <p>Gigante de transporte de carga massiva com porão de <strong>500 Toneladas</strong> e blindagem reforçada. Otimizada para exportação de minérios em grande escala para o mercado.</p>
+              <p>Massive commercial transport freighter featuring a <strong>500-Ton</strong> cargo capacity and reinforced plating. Designed for bulk mineral export and large-scale market logistics.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">500T Hold</span>
-                <span class="codex-pill">Blindagem Pesada</span>
+                <span class="codex-pill">500T Cargo Hold</span>
+                <span class="codex-pill">Armored Hull</span>
               </div>
             </div>
           </div>
@@ -372,48 +371,48 @@ export class CodexModal extends UIComponent {
       case 'market':
         this.contentBody.innerHTML = `
           <div class="codex-section-intro">
-            <h3>📈 MERCADO REGIONAL, MOEDA ARP & REDE MULTIJOGADOR</h3>
-            <p>Participa numa economia aberta gerida diretamente pelos jogadores, coordenada em tempo real através de rede quântica persistente.</p>
+            <h3>📈 REGIONAL MARKET, ARP CREDITS & MULTIPLAYER NETWORK</h3>
+            <p>Participate in a persistent player-driven economy coordinated across a real-time quantum network.</p>
           </div>
 
           <div class="codex-grid">
             <div class="codex-card">
-              <div class="codex-card-tag">LIVRO DE ORDENS REGIONAL</div>
-              <h4>Mercado de Mercadorias</h4>
-              <p>Coloca minérios, naves e drones à venda diretamente do cofre da estação. Define os teus preços unitários ou compra recursos listados por outros comandantes em trânsito.</p>
+              <div class="codex-card-tag">REGIONAL ORDER BOOK</div>
+              <h4>Commodity Exchange</h4>
+              <p>Place commodities, ships, and drones up for sale directly from station storage. Specify custom unit prices or instantly fulfill existing open buy and sell orders.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">Ordens de Compra & Venda</span>
-                <span class="codex-pill">Venda por Clique Direito</span>
+                <span class="codex-pill">Buy & Sell Orders</span>
+                <span class="codex-pill">Right-Click Sell Shortcut</span>
               </div>
             </div>
 
             <div class="codex-card">
-              <div class="codex-card-tag">SISTEMA MONETÁRIO</div>
-              <h4>Créditos Galácticos ARP</h4>
-              <p>A moeda de curso legal no setor interestelar. Ganha ARP negociando excedentes de mineração para adquirir novas naves de grande porte e equipar o teu esquadrão de drones.</p>
+              <div class="codex-card-tag">UNIVERSAL CURRENCY</div>
+              <h4>ARP Credits</h4>
+              <p>Official currency across all sectors. Earn ARP by exporting mined minerals, trading equipment, or fulfilling regional supply quotas to acquire top-tier vessels.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">Carteira Digital</span>
-                <span class="codex-pill">Taxa de Estação Transparente</span>
+                <span class="codex-pill">Digital Wallet</span>
+                <span class="codex-pill">Transparent Station Fee</span>
               </div>
             </div>
 
             <div class="codex-card">
-              <div class="codex-card-tag">UNIVERSO PARTILHADO</div>
-              <h4>Multijogador em Tempo Real</h4>
-              <p>Voa lado a lado com outros comandantes. Todas as naves, feixes de mineração, movimentações de drones e alterações no mercado são sincronizadas instantaneamente via WebSockets.</p>
+              <div class="codex-card-tag">SHARED UNIVERSE</div>
+              <h4>Real-Time Multiplayer</h4>
+              <p>Pilot alongside fellow commanders. All player positions, mining lasers, drone operations, and market transactions synchronize seamlessly via WebSockets.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">Presença Simultânea</span>
-                <span class="codex-pill">Sincronização Total</span>
+                <span class="codex-pill">Live Player Presence</span>
+                <span class="codex-pill">Full State Sync</span>
               </div>
             </div>
 
             <div class="codex-card">
-              <div class="codex-card-tag">REDE DE COMUNICAÇÕES</div>
-              <h4>Chat de Setor & Nuvem Persistente</h4>
-              <p>Canal de comunicações instantâneo para coordenação tática com pilotos vizinhos. Todo o teu progresso, património e localização são guardados com segurança permanente na nuvem.</p>
+              <div class="codex-card-tag">COMMUNICATIONS NETWORK</div>
+              <h4>Sector Comms & Cloud Persistence</h4>
+              <p>Instant sector chat channel for tactical wing coordination. Player accounts, station vaults, fleet rosters, and wallets persist securely in the cloud.</p>
               <div class="codex-card-footer">
-                <span class="codex-pill">Comms de Setor</span>
-                <span class="codex-pill">Base de Dados Turso</span>
+                <span class="codex-pill">Sector Chat</span>
+                <span class="codex-pill">Turso Cloud DB</span>
               </div>
             </div>
           </div>
