@@ -531,6 +531,12 @@ export class HarpiaGameEngine {
     // Se o jogador estava dentro da estação, restaurar o Hangar ativo
     if (this.ship.isDocked) {
       this.bus.emit(EV.STATION_DOCKED);
+    } else {
+      this.bus.emit(EV.STATION_UNDOCK);
+      if (this.ship.wrapEl) {
+        this.ship.wrapEl.style.display = 'flex';
+        this.ship.wrapEl.style.opacity = '1';
+      }
     }
 
     if (this.chatWidget) {
@@ -575,6 +581,11 @@ function initEngine() {
         window.HarpiaEngine.lobbyView.exitGameWorld();
       }
     };
+    window.addEventListener('beforeunload', () => {
+      if (window.HarpiaEngine && window.HarpiaEngine.ship) {
+        window.HarpiaEngine.ship._saveState();
+      }
+    });
   }
 }
 

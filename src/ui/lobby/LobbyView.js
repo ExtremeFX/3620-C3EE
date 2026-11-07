@@ -5,7 +5,7 @@
 import { UIComponent } from '../core/UIComponent.js';
 import { EV } from '../../core/EventBus.js';
 import { api } from '../../network/ApiClient.js';
-import { setMinerals, setShipCargo, setShipDrones, setHangarShips, setFleetMissions, setDeposits, setPilotCredits, setActiveShip } from '../../core/state.js';
+import { setMinerals, setShipCargo, setShipDrones, setHangarShips, setFleetMissions, setDeposits, setPilotCredits, setActiveShip, syncStateNow } from '../../core/state.js';
 import { LogoCanvas } from '../logo/LogoCanvas.js';
 import { AuthPanel } from './AuthPanel.js';
 import { DailyRewardWidget } from './DailyRewardWidget.js';
@@ -245,6 +245,11 @@ export class LobbyView extends UIComponent {
   }
 
   exitGameWorld() {
+    if (window.HarpiaEngine && window.HarpiaEngine.ship) {
+      window.HarpiaEngine.ship._saveState();
+    }
+    syncStateNow();
+
     const gameWorld = document.getElementById('game-world');
     if (gameWorld) {
       gameWorld.classList.remove('active');

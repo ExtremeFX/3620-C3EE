@@ -116,34 +116,43 @@ function _syncToServer() {
   if (_syncTimer) clearTimeout(_syncTimer);
   _syncTimer = setTimeout(() => {
     _syncTimer = null;
-    let shipPos = null;
-    if (typeof window !== 'undefined' && window.HarpiaEngine?.ship) {
-      const s = window.HarpiaEngine.ship;
-      shipPos = {
-        x: Math.round(s.x),
-        y: Math.round(s.y),
-        angle: Number(s.angle.toFixed(3)),
-        isDocked: Boolean(s.isDocked)
-      };
-    }
-
-    api.syncStorage({
-      shipId: _state.activeShipId || 'H-M2',
-      activeShipId: _state.activeShipId || 'H-M2',
-      storage: { ..._state.stationMinerals },
-      shipCargo: { ..._state.shipCargo },
-      shipDrones: { ..._state.shipDrones },
-      position: shipPos
-    }).catch(err => {
-      console.warn('[State] syncStorage failed:', err);
-      // FIX BUG-ST5: on 401, clear stale token so the player is redirected to login
-      if (err && err.status === 401) {
-        api.setToken(null);
-        api.setUser(null);
-        emit(EV.AUTH_LOGGED_OUT, null);
-      }
-    });
+    syncStateNow();
   }, 400);
+}
+
+export function syncStateNow() {
+  if (!api.token) return Promise.resolve();
+  if (_syncTimer) {
+    clearTimeout(_syncTimer);
+    _syncTimer = null;
+  }
+  let shipPos = null;
+  if (typeof window !== 'undefined' && window.HarpiaEngine?.ship) {
+    const s = window.HarpiaEngine.ship;
+    shipPos = {
+      x: Math.round(s.x),
+      y: Math.round(s.y),
+      angle: Number(s.angle.toFixed(3)),
+      isDocked: Boolean(s.isDocked)
+    };
+  }
+
+  return api.syncStorage({
+    shipId: _state.activeShipId || 'H-M2',
+    activeShipId: _state.activeShipId || 'H-M2',
+    storage: { ..._state.stationMinerals },
+    shipCargo: { ..._state.shipCargo },
+    shipDrones: { ..._state.shipDrones },
+    position: shipPos
+  }).catch(err => {
+    console.warn('[State] syncStorage failed:', err);
+    // FIX BUG-ST5: on 401, clear stale token so the player is redirected to login
+    if (err && err.status === 401) {
+      api.setToken(null);
+      api.setUser(null);
+      emit(EV.AUTH_LOGGED_OUT, null);
+    }
+  });
 }
 
 export function setPilotData(pilot) {

@@ -1,4 +1,5 @@
 'use strict'
+const db = require('../database/db')
 
 /**
  * HARPIA Universe - Spatial Multiplayer Manager
@@ -139,6 +140,7 @@ class SpatialMultiplayerManager {
       return
     }
 
+    const prevDocked = pilot.isDocked
     if (Number.isFinite(data.x)) pilot.x = Math.round(data.x)
     if (Number.isFinite(data.y)) pilot.y = Math.round(data.y)
     if (Number.isFinite(data.angle)) pilot.angle = Number(data.angle.toFixed(3))
@@ -159,6 +161,19 @@ class SpatialMultiplayerManager {
     }
 
     pilot.lastSeen = Date.now()
+
+    // Persistência contínua na base de dados (se o estado de atracagem mudou ou a cada 10 segundos)
+    const now = Date.now()
+    if (!pilot.lastDbSave || (now - pilot.lastDbSave > 10000) || prevDocked !== pilot.isDocked) {
+      pilot.lastDbSave = now
+      const safePos = {
+        x: pilot.x,
+        y: pilot.y,
+        angle: pilot.angle,
+        isDocked: pilot.isDocked
+      }
+      db.run('UPDATE pilots SET position_json = ? WHERE id = ?', [JSON.stringify(safePos), key]).catch(() => {})
+    }
   }
 
   /**
@@ -228,17 +243,32 @@ class SpatialMultiplayerManager {
     }
   }
 
+  getPilot(pilotId) {
+    return this.pilots.get(Number(pilotId))
+  }
+
   /**
    * Remove o piloto quando desconecta
    * @param {number} pilotId 
    */
-  unregisterPilot(pilotId) {
+  async unregisterPilot(pilotId) {
     const key = Number(pilotId)
     const pilot = this.pilots.get(key)
     if (pilot) {
+      try {
+        const safePos = {
+          x: Math.round(pilot.x || 0),
+          y: Math.round(pilot.y || 0),
+          angle: Number((pilot.angle || 0).toFixed(3)),
+          isDocked: Boolean(pilot.isDocked)
+        }
+        await db.run('UPDATE pilots SET position_json = ? WHERE id = ?', [JSON.stringify(safePos), key])
+      } catch (e) {
+        console.warn(`[Spatial] Erro ao persistir posição do piloto #${key}:`, e)
+      }
       const systemId = pilot.systemId
       this.pilots.delete(key)
-      console.log(`[MULTIPLAYER] Piloto #${key} saiu do espaço`)
+      console.log(`[MULTIPLAYER] Piloto #${key} saiu do espaço (pos persistida: x=${pilot.x}, y=${pilot.y}, docked=${pilot.isDocked})`)
 
       if (this.wsManager) {
         this._broadcastToSystem(systemId, 'PILOT_DESPAWN', { id: key }, key)

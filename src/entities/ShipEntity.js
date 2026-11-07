@@ -5,6 +5,7 @@
 import { EV } from '../core/EventBus.js';
 import { getShipInfo } from '../config/shipsRegistry.js';
 import { playWarpChargeSound, playWarpEntrySound, playWarpExitSound, startHoverSound, stopHoverSound, stopWarpSound } from '../core/audio.js';
+import { syncStateNow } from '../core/state.js';
 
 export class ShipEntity {
   /**
@@ -123,10 +124,18 @@ export class ShipEntity {
           this.angle = data.angle;
           this.targetAngle = data.angle;
         }
-        if (data.isDocked === true) {
-          this.isDocked = true;
-          this.opacity = 0;
-          if (this.wrapEl) this.wrapEl.style.display = 'none';
+        if (typeof data.isDocked === 'boolean') {
+          this.isDocked = data.isDocked;
+          if (this.isDocked) {
+            this.opacity = 0;
+            if (this.wrapEl) this.wrapEl.style.display = 'none';
+          } else {
+            this.opacity = 1.0;
+            if (this.wrapEl) {
+              this.wrapEl.style.display = 'flex';
+              this.wrapEl.style.opacity = '1';
+            }
+          }
         }
       }
     } catch (e) {
@@ -233,10 +242,19 @@ export class ShipEntity {
       this.angle = pos.angle;
       this.targetAngle = pos.angle;
     }
-    if (pos.isDocked === true) {
-      this.isDocked = true;
-      this.opacity = 0;
-      if (this.wrapEl) this.wrapEl.style.display = 'none';
+    if (typeof pos.isDocked === 'boolean') {
+      this.isDocked = pos.isDocked;
+      if (this.isDocked) {
+        this.opacity = 0;
+        if (this.wrapEl) this.wrapEl.style.display = 'none';
+      } else {
+        this.isDocking = false;
+        this.opacity = 1.0;
+        if (this.wrapEl) {
+          this.wrapEl.style.display = 'flex';
+          this.wrapEl.style.opacity = '1';
+        }
+      }
     }
     this._saveState();
   }
@@ -428,6 +446,7 @@ export class ShipEntity {
     this._saveState();
     startHoverSound(1.2);
     this.bus?.emit(EV.STATION_UNDOCK);
+    syncStateNow();
   }
 
   /**
@@ -453,6 +472,7 @@ export class ShipEntity {
         if (this.wrapEl) this.wrapEl.style.display = 'none';
 
         this._saveState();
+        syncStateNow();
         // Dispara evento de ancoragem concluída -> abre o interior do hangar maximizado
         this.bus?.emit(EV.STATION_DOCKED);
       }
@@ -532,6 +552,7 @@ export class ShipEntity {
         }
         this._saveState();
         startHoverSound(1.2);
+        syncStateNow();
         return;
       } else {
         this.x += (dx / dist) * step;
@@ -634,6 +655,7 @@ export class ShipEntity {
     this._saveState();
     startHoverSound(1.2);
     this.bus?.emit(EV.SHIP_ARRIVED, { x: this.x, y: this.y });
+    syncStateNow();
   }
 
   /**
