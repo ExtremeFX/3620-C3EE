@@ -15,7 +15,7 @@ export class CodexModal extends UIComponent {
     this.bus = eventBus;
 
     this.isOpen = false;
-    this.activeTab = 'flight'; // 'flight' | 'mining' | 'station' | 'market'
+    this.activeTab = 'flight'; // 'flight' | 'mining' | 'station' | 'market' | 'system'
 
     // DOM Nodes
     this.triggerBtn = null;
@@ -99,6 +99,9 @@ export class CodexModal extends UIComponent {
           </button>
           <button type="button" class="codex-tab-btn" data-tab="market">
             <span class="tab-icon">📈</span> MARKET & NETWORK
+          </button>
+          <button type="button" class="codex-tab-btn" data-tab="system">
+            <span class="tab-icon">⚙️</span> SYSTEM & SPECS
           </button>
         </nav>
 
@@ -413,6 +416,64 @@ export class CodexModal extends UIComponent {
               <div class="codex-card-footer">
                 <span class="codex-pill">Sector Chat</span>
                 <span class="codex-pill">Turso Cloud DB</span>
+              </div>
+            </div>
+          </div>
+        `;
+        break;
+
+      case 'system':
+        this.contentBody.innerHTML = `
+          <div class="codex-section-intro">
+            <h3>⚙️ SYSTEM & HARDWARE REQUIREMENTS</h3>
+            <p>Optimal specifications and browser configuration for high-fidelity 60 FPS flight, real-time multiplayer, and low-latency physics in HARPIA Universe.</p>
+          </div>
+
+          <div class="codex-grid">
+            <div class="codex-card">
+              <div class="codex-card-tag">MINIMUM SPEC // 1080P FLIGHT</div>
+              <h4>Base Flight Profile</h4>
+              <p>Ensures smooth navigation, responsive cockpit controls, and stable sector streaming at standard 1080p resolution with post-processing enabled.</p>
+              <div class="codex-card-footer">
+                <span class="codex-pill">CPU: 4 Cores (2.5+ GHz)</span>
+                <span class="codex-pill">RAM: 8 GB DDR4</span>
+                <span class="codex-pill">GPU: Intel UHD 630 / Iris / Vega 8</span>
+                <span class="codex-pill">Net: 10 Mbps (&lt;80ms ping)</span>
+              </div>
+            </div>
+
+            <div class="codex-card">
+              <div class="codex-card-tag">RECOMMENDED SPEC // 1440P+ 60 FPS</div>
+              <h4>High-Performance Wing</h4>
+              <p>Designed for flawless 60 FPS combat, dense asteroid belts, particle-rich mining beams, multi-vessel encounters, and ultra-wide displays.</p>
+              <div class="codex-card-footer">
+                <span class="codex-pill">CPU: 6+ Cores (Intel i5 10th+ / Ryzen 5)</span>
+                <span class="codex-pill">RAM: 16 GB Dual-Channel</span>
+                <span class="codex-pill">GPU: GTX 1650 / RTX 2060+ / RX 5500+</span>
+                <span class="codex-pill">Storage: NVMe / SATA SSD</span>
+                <span class="codex-pill">Net: 50+ Mbps Fiber (&lt;35ms ping)</span>
+              </div>
+            </div>
+
+            <div class="codex-card">
+              <div class="codex-card-tag">CRITICAL BROWSER SETTING</div>
+              <h4>Hardware Acceleration</h4>
+              <p>Mandatory for GPU canvas rendering. Ensure <strong>"Use graphics acceleration when available"</strong> is enabled in your browser settings (Chrome, Edge, Brave, Firefox, Opera) to avoid CPU software fallback.</p>
+              <div class="codex-card-footer">
+                <span class="codex-pill">Hardware Acceleration: ON</span>
+                <span class="codex-pill">WebGL 2.0 Enabled</span>
+                <span class="codex-pill">GPU Rasterization</span>
+              </div>
+            </div>
+
+            <div class="codex-card">
+              <div class="codex-card-tag">ENGINE & AUDIO INTEGRATION</div>
+              <h4>Platform & Web Audio Engine</h4>
+              <p>Compatible with 64-bit Windows 10/11, macOS 11+, and Linux. Interactive audio requires initial user interaction (click anywhere on lobby or cockpit) to permit browser sound activation.</p>
+              <div class="codex-card-footer">
+                <span class="codex-pill">64-Bit OS</span>
+                <span class="codex-pill">Web Audio API</span>
+                <span class="codex-pill">WebSocket 10 Hz Real-Time</span>
               </div>
             </div>
           </div>
