@@ -891,7 +891,7 @@
                             </div>
                             <div class="telemetry-cell">
                                 <div class="cell-tag">CRÉDITOS INICIAIS:</div>
-                                <div class="cell-val" style="color: var(--amber-gold);">150.000 CR</div>
+                                <div class="cell-val" id="lblHangarCredits" style="color: var(--amber-gold);">1.000 CR</div>
                             </div>
                             <div class="telemetry-cell">
                                 <div class="cell-tag">SITUAÇÃO DE FROTA:</div>
@@ -1103,7 +1103,11 @@
             document.getElementById('inRegCallsign').value = randP + '_' + randS + num;
         }
 
-        function executeLogin(e) {
+        const API_BASE = (window.location.protocol === 'http:' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+            ? ''
+            : 'http://127.0.0.1:8000';
+
+        async function executeLogin(e) {
             e.preventDefault();
             const user = document.getElementById('inLoginUser').value.trim();
             const pass = document.getElementById('inLoginPass').value;
@@ -1113,15 +1117,42 @@
                 return;
             }
 
-            renderAuthorizedPilot(user);
+            const btn = e.target.querySelector('button[type="submit"]');
+            if (btn) btn.disabled = true;
+            showTerminalMessage('A autenticar com o servidor central...', 'info');
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+
+                const data = await res.json().catch(() => ({}));
+                if (res.ok) {
+                    renderAuthorizedPilot(data.pilot?.username || user, data.pilot?.id, data.pilot?.credits);
+                } else {
+                    const msg = data.detail || data.message || `Erro HTTP ${res.status}: Credenciais inválidas`;
+                    showTerminalMessage('❌ ' + msg, 'error');
+                }
+            } catch (err) {
+                showTerminalMessage('❌ Servidor offline ou inacessível em ' + (API_BASE || 'localhost:8000') + '. Inicia o servidor com "1. LIGAR SERVIDOR.bat". Se estiveres no GitHub Pages, abre via http://localhost:8000/web/index.html.', 'error');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
         }
 
-        function executeRegister(e) {
+        async function executeRegister(e) {
             e.preventDefault();
             const callsign = document.getElementById('inRegCallsign').value.trim();
             const email = document.getElementById('inRegEmail').value.trim();
             const pass = document.getElementById('inRegPass').value;
             const confirm = document.getElementById('inRegConfirm').value;
+
+            if (!callsign || !email || !pass) {
+                showTerminalMessage('Todos os campos são obrigatórios.', 'error');
+                return;
+            }
 
             if (pass !== confirm) {
                 showTerminalMessage('As chaves de acesso não coincidem.', 'error');
@@ -1133,7 +1164,38 @@
                 return;
             }
 
-            renderAuthorizedPilot(callsign);
+            const btn = e.target.querySelector('button[type="submit"]');
+            if (btn) btn.disabled = true;
+            showTerminalMessage('A registar novo piloto no servidor central...', 'info');
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: callsign,
+                        email: email,
+                        password: pass
+                    })
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok) {
+                    const pilotId = data.pilot?.id;
+                    const credits = data.pilot?.credits || 1000;
+                    renderAuthorizedPilot(callsign, pilotId, credits);
+                } else if (res.status === 409) {
+                    showTerminalMessage('❌ Erro: O Callsign ou o E-mail já se encontram registados na base de dados.', 'error');
+                } else {
+                    const msg = data.detail || data.message || `Erro HTTP ${res.status}`;
+                    showTerminalMessage('❌ ' + msg, 'error');
+                }
+            } catch (err) {
+                showTerminalMessage('❌ Servidor offline ou inacessível em ' + (API_BASE || 'localhost:8000') + '. Inicia o servidor com "1. LIGAR SERVIDOR.bat". Se o browser bloquear HTTP a partir de HTTPS (GitHub Pages), acede por http://localhost:8000/web/index.html.', 'error');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
         }
 
         function showTerminalMessage(msg, type) {
@@ -1143,15 +1205,19 @@
             alertB.style.display = 'block';
         }
 
-        function renderAuthorizedPilot(callsign) {
+        function renderAuthorizedPilot(callsign, pilotId, credits) {
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('regForm').style.display = 'none';
             document.getElementById('tabGroup').style.display = 'none';
             document.getElementById('terminalAlert').style.display = 'none';
 
             document.getElementById('lblCallsign').textContent = callsign.toUpperCase();
-            const randId = Math.floor(Math.random() * 8999) + 1000;
-            document.getElementById('lblLicenseId').textContent = 'ID MILITAR: HP-2026-X' + randId;
+            if (pilotId) {
+                document.getElementById('lblLicenseId').textContent = 'ID MILITAR: HP-2026-X' + pilotId;
+            }
+            if (credits !== undefined) {
+                document.getElementById('lblHangarCredits').textContent = Number(credits).toLocaleString() + ' CR';
+            }
             document.getElementById('pilotLicenseCard').style.display = 'block';
         }
     </script>
