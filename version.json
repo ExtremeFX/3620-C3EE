@@ -1,8 +1,8 @@
-{
+﻿{
   "version": "0.2.0",
   "name": "HARPIA UNIVERSE Alpha v0.2.0",
   "downloadUrl": "https://extremefx.github.io/Harpia-Universe/HARPIA_UNIVERSE_v0.2.0.zip",
-  "sha256": "D12FED3E3CE708DC357E26B6DDE789FAE0D145FE5AC8548FFC9B0718EAA3CCD8",
+  "sha256": "EEF4F02927E34C6DC4B33ED55579617B080F4375D49E27A4C1CC671B38F6E71D",
   "mandatory": true,
-  "notes": "Fundacao nativa Windows C# + WPF (1900x1000) com autenticacao real e frotas iniciais no hangar."
+  "notes": "Novo ecra de login flutuante minimalista com fundo preto e cartao ciano escuro."
 }
