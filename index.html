@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HARPIA UNIVERSE — Terminal Oficial de Comando & Alistamento</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-void: #020306;
+            --panel-glass: rgba(6, 10, 16, 0.85);
+            --panel-glass-hover: rgba(10, 16, 26, 0.95);
+            --cyan-neon: #00E5FF;
+            --cyan-dim: #008E9B;
+            --cyan-glow: rgba(0, 229, 255, 0.4);
+            --amber-gold: #FFB300;
+            --amber-glow: rgba(255, 179, 0, 0.35);
+            --emerald-green: #00E676;
+            --laser-red: #FF3D71;
+            --border-tech: rgba(0, 229, 255, 0.28);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --text-pure: #FFFFFF;
+            --text-heading: #F0F6FC;
+            --text-body: #A5B6CD;
+            --text-muted: #566B84;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-void);
+            color: var(--text-heading);
+            font-family: 'Rajdhani', sans-serif;
+            line-height: 1.55;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* ─── CENÁRIO DE FUNDO CINEMATOGRÁFICO ────────────────────────── */
+        .backdrop-universe {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(circle at 50% 25%, rgba(0, 0, 0, 0.15) 0%, rgba(2, 3, 6, 0.82) 80%, var(--bg-void) 100%),
+                linear-gradient(to bottom, rgba(2, 3, 6, 0.4) 0%, rgba(2, 3, 6, 0.72) 45%, var(--bg-void) 98%),
+                url('background.jpg');
+            background-size: cover;
+            background-position: center top;
+            background-repeat: no-repeat;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Grelha Holográfica Tática */
+        .backdrop-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(to right, rgba(0, 229, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 229, 255, 0.035) 1px, transparent 1px);
+            background-size: 55px 55px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ─── NAVEGAÇÃO PREMIUM ──────────────────────────────────────── */
+        header {
+            border-bottom: 1px solid var(--border-tech);
+            background: rgba(3, 5, 9, 0.82);
+            backdrop-filter: blur(16px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .nav-wrap {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+        }
+
+        .brand-mark {
+            width: 10px;
+            height: 36px;
+            background: var(--cyan-neon);
+            box-shadow: 0 0 16px var(--cyan-neon), 0 0 30px var(--cyan-glow);
+            border-radius: 1px;
+        }
+
+        .brand-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 2.5px;
+            color: var(--text-pure);
+        }
+
+        .brand-title span {
+            color: var(--cyan-neon);
+            text-shadow: 0 0 15px var(--cyan-glow);
+        }
+
+        .brand-sub {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--amber-gold);
+            letter-spacing: 1.5px;
+            display: block;
+            margin-top: -3px;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-body);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            transition: all 0.25s;
+            font-family: 'Share Tech Mono', monospace;
+            position: relative;
+            padding: 6px 0;
+        }
+
+        .nav-link:hover {
+            color: var(--cyan-neon);
+            text-shadow: 0 0 10px var(--cyan-glow);
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; width: 0%; height: 1.5px;
+            background: var(--cyan-neon);
+            transition: width 0.25s;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-launch-header {
+            background: transparent;
+            color: var(--amber-gold);
+            border: 1px solid var(--amber-gold);
+            padding: 10px 22px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-decoration: none;
+            transition: all 0.25s;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 179, 0, 0.15);
+        }
+
+        .btn-launch-header:hover {
+            background: var(--amber-gold);
+            color: #000;
+            box-shadow: 0 0 25px var(--amber-glow);
+        }
+
+        /* ─── HERO SECTION CINEMATOGRÁFICA ───────────────────────────── */
+        .hero-section {
+            padding: 95px 0 65px 0;
+            text-align: center;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 229, 255, 0.08);
+            border: 1px solid var(--cyan-neon);
+            color: var(--cyan-neon);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            padding: 7px 20px;
+            margin-bottom: 26px;
+            letter-spacing: 2px;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
+        }
+
+        .status-dot-pulse {
+            width: 8px;
+            height: 8px;
+            background: var(--cyan-neon);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--cyan-neon);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 16px var(--cyan-neon); }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .hero-headline {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(36px, 5.8vw, 74px);
+            font-weight: 900;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 22px;
+            line-height: 1.08;
+            color: var(--text-pure);
+        }
+
+        .hero-headline span {
+            color: var(--cyan-neon);
+            text-shadow: 0 0 35px rgba(0, 229, 255, 0.5);
+        }
+
+        .hero-lead {
+            font-size: clamp(17px, 2.3vw, 22px);
+            color: var(--text-body);
+            max-width: 880px;
+            margin: 0 auto 40px auto;
+            font-weight: 500;
+            text-shadow: 0 3px 12px rgba(0, 0, 0, 0.9);
+        }
+
+        .pills-group {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 25px;
+        }
+
+        .badge-spec {
+            background: rgba(8, 14, 22, 0.8);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-body);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            padding: 8px 18px;
+            letter-spacing: 1px;
+        }
+
+        .badge-spec strong {
+            color: var(--cyan-neon);
+        }
+
+        /* ─── TERMINAL DE ALISTAMENTO TÁTICO (GLASS HUD) ─────────────── */
+        .auth-container {
+            padding: 20px 0 85px 0;
+        }
+
+        .auth-terminal {
+            background: var(--panel-glass);
+            border: 1.5px solid var(--border-tech);
+            max-width: 640px;
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 30px rgba(0, 229, 255, 0.1);
+            position: relative;
+            backdrop-filter: blur(18px);
+        }
+
+        /* Cantos táticos militares HUD */
+        .auth-terminal::before {
+            content: "";
+            position: absolute;
+            top: -2px; left: -2px; width: 14px; height: 14px;
+            border-top: 3px solid var(--cyan-neon);
+            border-left: 3px solid var(--cyan-neon);
+        }
+        .auth-terminal::after {
+            content: "";
+            position: absolute;
+            bottom: -2px; right: -2px; width: 14px; height: 14px;
+            border-bottom: 3px solid var(--cyan-neon);
+            border-right: 3px solid var(--cyan-neon);
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 24px;
+            background: rgba(2, 4, 8, 0.8);
+            border-bottom: 1px solid var(--border-tech);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .terminal-header .indicator {
+            color: var(--emerald-green);
+            font-weight: bold;
+        }
+
+        .auth-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border-bottom: 1px solid var(--border-tech);
+        }
+
+        .tab-btn {
+            background: rgba(2, 4, 8, 0.85);
+            color: var(--text-body);
+            border: none;
+            padding: 18px 24px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.25s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn.active {
+            background: var(--panel-glass);
+            color: var(--cyan-neon);
+            border-bottom: 2px solid var(--cyan-neon);
+            text-shadow: 0 0 12px var(--cyan-glow);
+        }
+
+        .terminal-content {
+            padding: 40px 34px;
+        }
+
+        .input-group {
+            margin-bottom: 22px;
+        }
+
+        .input-label {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--text-body);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .input-helper {
+            color: var(--cyan-neon);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .tech-input {
+            width: 100%;
+            background: rgba(2, 4, 8, 0.85);
+            border: 1px solid var(--border-tech);
+            color: var(--text-pure);
+            padding: 14px 16px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.25s;
+        }
+
+        .tech-input:focus {
+            border-color: var(--cyan-neon);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+            background: rgba(4, 8, 14, 0.95);
+        }
+
+        .btn-submit-action {
+            width: 100%;
+            background: var(--cyan-neon);
+            color: #000000;
+            border: none;
+            padding: 16px 24px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.25s;
+            margin-top: 12px;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.35);
+        }
+
+        .btn-submit-action:hover {
+            background: #FFFFFF;
+            box-shadow: 0 0 35px rgba(0, 229, 255, 0.75);
+            transform: translateY(-1px);
+        }
+
+        .alert-terminal {
+            margin-top: 20px;
+            padding: 14px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            display: none;
+            text-align: center;
+        }
+
+        .alert-terminal.success {
+            display: block;
+            background: rgba(0, 230, 118, 0.12);
+            border: 1px solid var(--emerald-green);
+            color: var(--emerald-green);
+        }
+
+        .alert-terminal.error {
+            display: block;
+            background: rgba(255, 61, 113, 0.12);
+            border: 1px solid var(--laser-red);
+            color: var(--laser-red);
+        }
+
+        /* ─── HOLOGRAPHIC PILOT LICENSE CARD (APÓS LOGIN) ────────────── */
+        .pilot-license {
+            display: none;
+            text-align: center;
+            padding: 20px 10px;
+        }
+
+        .license-badge {
+            display: inline-block;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            background: rgba(0, 230, 118, 0.15);
+            border: 1px solid var(--emerald-green);
+            color: var(--emerald-green);
+            padding: 4px 14px;
+            margin-bottom: 12px;
+            letter-spacing: 1.5px;
+        }
+
+        .license-callsign {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--cyan-neon);
+            text-shadow: 0 0 20px var(--cyan-glow);
+            letter-spacing: 3px;
+        }
+
+        .license-id {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            color: var(--amber-gold);
+            margin-bottom: 28px;
+        }
+
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+            text-align: left;
+        }
+
+        .telemetry-cell {
+            background: rgba(3, 5, 9, 0.9);
+            border: 1px solid var(--border-tech);
+            padding: 16px;
+            position: relative;
+        }
+
+        .cell-tag {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        .cell-val {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-pure);
+            margin-top: 5px;
+        }
+
+        .btn-download-client {
+            display: block;
+            width: 100%;
+            background: var(--emerald-green);
+            color: #000;
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            padding: 18px 24px;
+            transition: all 0.25s;
+            box-shadow: 0 0 25px rgba(0, 230, 118, 0.4);
+        }
+
+        .btn-download-client:hover {
+            background: #FFFFFF;
+            box-shadow: 0 0 40px rgba(0, 230, 118, 0.8);
+            transform: translateY(-2px);
+        }
+
+        /* ─── 4 PILARES DO UNIVERSO (CARDS PREMIUM) ──────────────────── */
+        .section-header {
+            text-align: center;
+            margin-bottom: 55px;
+        }
+
+        .section-tag {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--amber-gold);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .section-headline {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(28px, 4vw, 42px);
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--text-pure);
+            text-transform: uppercase;
+        }
+
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 28px;
+            margin-bottom: 95px;
+        }
+
+        .pillar-card {
+            background: var(--panel-glass);
+            border: 1px solid var(--border-tech);
+            padding: 40px 30px;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            backdrop-filter: blur(14px);
+        }
+
+        .pillar-card:hover {
+            border-color: var(--cyan-neon);
+            transform: translateY(-6px);
+            background: var(--panel-glass-hover);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.9), 0 0 25px rgba(0, 229, 255, 0.2);
+        }
+
+        .pillar-icon-code {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 900;
+            color: var(--cyan-neon);
+            margin-bottom: 16px;
+            letter-spacing: 2px;
+        }
+
+        .pillar-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 21px;
+            font-weight: 800;
+            margin-bottom: 14px;
+            color: var(--text-pure);
+            letter-spacing: 1px;
+        }
+
+        .pillar-desc {
+            color: var(--text-body);
+            font-size: 15.5px;
+            line-height: 1.65;
+        }
+
+        /* ─── HANGAR DAS NAVES TÁTICAS (ARSENAL) ─────────────────────── */
+        .hangar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 32px;
+            margin-bottom: 95px;
+        }
+
+        .ship-card {
+            background: var(--panel-glass);
+            border: 1.5px solid var(--border-tech);
+            padding: 36px 32px;
+            position: relative;
+            backdrop-filter: blur(14px);
+            transition: all 0.3s;
+        }
+
+        .ship-card:hover {
+            border-color: var(--cyan-neon);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 229, 255, 0.25);
+        }
+
+        .ship-classification {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--amber-gold);
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .ship-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--text-pure);
+            margin-bottom: 16px;
+            letter-spacing: 2px;
+        }
+
+        .ship-desc {
+            color: var(--text-body);
+            font-size: 15px;
+            margin-bottom: 28px;
+            line-height: 1.6;
+        }
+
+        .spec-bar-group {
+            margin-bottom: 16px;
+        }
+
+        .spec-bar-labels {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            margin-bottom: 6px;
+            color: var(--text-body);
+        }
+
+        .spec-track {
+            height: 6px;
+            background: rgba(2, 4, 8, 0.9);
+            border: 1px solid var(--border-tech);
+            overflow: hidden;
+        }
+
+        .spec-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--cyan-dim), var(--cyan-neon));
+            box-shadow: 0 0 10px var(--cyan-neon);
+        }
+
+        /* ─── REQUISITOS TÉCNICOS & DESEMPENHO ───────────────────────── */
+        .specs-panel {
+            background: var(--panel-glass);
+            border: 1px solid var(--border-tech);
+            padding: 45px 38px;
+            margin-bottom: 95px;
+            backdrop-filter: blur(14px);
+        }
+
+        .specs-columns {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 30px;
+            margin-top: 35px;
+        }
+
+        .spec-cell {
+            border-left: 2.5px solid var(--cyan-neon);
+            padding-left: 18px;
+        }
+
+        .cell-heading {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11.5px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .cell-data {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--text-pure);
+            margin-top: 6px;
+        }
+
+        /* ─── RODAPÉ PREMIUM ─────────────────────────────────────────── */
+        footer {
+            border-top: 1px solid var(--border-tech);
+            padding: 45px 0;
+            margin-top: auto;
+            background: rgba(2, 3, 6, 0.96);
+            backdrop-filter: blur(16px);
+        }
+
+        .footer-wrap {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .footer-copy {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            color: var(--text-body);
+        }
+
+        .footer-tagline {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--cyan-neon);
+            letter-spacing: 1px;
+        }
+
+        /* Responsividade */
+        @media (max-width: 868px) {
+            .nav-menu { display: none; }
+            .hero-headline { font-size: 38px; }
+            .terminal-content { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- CENÁRIO CINEMATOGRÁFICO DE FUNDO -->
+    <div class="backdrop-universe"></div>
+    <div class="backdrop-grid"></div>
+
+    <!-- 1. NAVEGAÇÃO PREMIUM -->
+    <header>
+        <div class="container nav-wrap">
+            <a href="#" class="brand-logo">
+                <div class="brand-mark"></div>
+                <div>
+                    <div class="brand-title">HARPIA <span>UNIVERSE</span></div>
+                    <span class="brand-sub">TACTICAL COMMAND // PETROFF GAMES</span>
+                </div>
+            </a>
+            <div class="nav-menu">
+                <a href="#universo" class="nav-link">O UNIVERSO</a>
+                <a href="#frotas" class="nav-link">FROTAS</a>
+                <a href="#estacao" class="nav-link">ESTAÇÕES</a>
+                <a href="#requisitos" class="nav-link">REQUISITOS</a>
+                <a href="#auth" class="nav-link">ALISTAMENTO</a>
+            </div>
+            <div class="nav-actions">
+                <a href="HARPIA_UNIVERSE_v0.2.0.zip" download class="btn-launch-header">⬇ DESCARREGAR JOGO</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. HERO PRINCIPAL -->
+    <main class="container">
+        <section class="hero-section">
+            <div class="status-pill">
+                <div class="status-dot-pulse"></div>
+                <span>PROTOCOLO DE ALISTAMENTO ABERTO // SETOR HARPIA PRIME</span>
+            </div>
+
+            <h1 class="hero-headline">O TEU IMPÉRIO ESTELAR<br><span>COMEÇA AQUI.</span></h1>
+
+            <p class="hero-lead">
+                Uma experiência de simulação e comando espacial tático em tempo real. Constrói a tua estação orbital, gere frotas de combate e domina setores persistentes numa aplicação nativa Windows de alto rendimento.
+            </p>
+
+            <div class="pills-group">
+                <div class="badge-spec"><strong>MODO:</strong> MULTIPLAYER PERSISTENTE</div>
+                <div class="badge-spec"><strong>MOTOR:</strong> WINDOWS NATIVO C# + WPF</div>
+                <div class="badge-spec"><strong>RESOLUÇÃO:</strong> 1900 x 1000 OTIMIZADA</div>
+                <div class="badge-spec"><strong>REDE:</strong> PROTOCOLO WEBSOCKET 24/7</div>
+            </div>
+        </section>
+
+        <!-- 3. TERMINAL DE ACESSO & ALISTAMENTO DE PILOTO -->
+        <section class="auth-container" id="auth">
+            <div class="auth-terminal">
+                <div class="terminal-header">
+                    <span>TERMINAL MILITAR // GATEWAY HARPIA-01</span>
+                    <span class="indicator">● ESTADO NOMINAL</span>
+                </div>
+
+                <!-- Seletor de Abas -->
+                <div class="auth-tabs" id="tabGroup">
+                    <button class="tab-btn active" onclick="selectTab('login')">INICIAR SESSÃO</button>
+                    <button class="tab-btn" onclick="selectTab('register')">NOVO ALISTAMENTO</button>
+                </div>
+
+                <div class="terminal-content">
+                    <!-- Formulário de LOGIN -->
+                    <form id="loginForm" onsubmit="executeLogin(event)">
+                        <div class="input-group">
+                            <label class="input-label">
+                                <span>CALLSIGN DE COMBATE OU E-MAIL:</span>
+                            </label>
+                            <input type="text" id="inLoginUser" class="tech-input" placeholder="ex: Comandante" required>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">
+                                <span>CHAVE CRIPTOGRÁFICA (PASSWORD):</span>
+                            </label>
+                            <input type="password" id="inLoginPass" class="tech-input" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn-submit-action">AUTORIZAR ENTRADA NO TERMINAL</button>
+                    </form>
+
+                    <!-- Formulário de REGISTO -->
+                    <form id="regForm" style="display: none;" onsubmit="executeRegister(event)">
+                        <div class="input-group">
+                            <label class="input-label">
+                                <span>CALLSIGN DO PILOTO (NOME DE COMBATE):</span>
+                                <span class="input-helper" onclick="generateRandomCallsign()">[Sugerir Callsign]</span>
+                            </label>
+                            <input type="text" id="inRegCallsign" class="tech-input" placeholder="ex: ApexLeader" required>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">
+                                <span>E-MAIL DE COMUNICAÇÕES SEGURAS:</span>
+                            </label>
+                            <input type="email" id="inRegEmail" class="tech-input" placeholder="piloto@harpia.space" required>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">
+                                <span>CHAVE DE ACESSO (MÍNIMO 6 CARACTERES):</span>
+                            </label>
+                            <input type="password" id="inRegPass" class="tech-input" placeholder="••••••••" required>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">
+                                <span>CONFIRMAÇÃO DA CHAVE:</span>
+                            </label>
+                            <input type="password" id="inRegConfirm" class="tech-input" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn-submit-action" style="background: var(--amber-gold);">ALISTAR PILOTO &amp; ATRIBUIR HANGAR</button>
+                    </form>
+
+                    <!-- Mensagens de Notificação -->
+                    <div id="terminalAlert" class="alert-terminal"></div>
+
+                    <!-- Holographic Pilot License (Após autenticação/registo) -->
+                    <div id="pilotLicenseCard" class="pilot-license">
+                        <div class="license-badge">● CREDENCIAL DE COMANDO ATIVA</div>
+                        <div class="license-callsign" id="lblCallsign">COMANDANTE</div>
+                        <div class="license-id" id="lblLicenseId">ID MILITAR: HP-2026-ALPHA</div>
+
+                        <div class="telemetry-grid">
+                            <div class="telemetry-cell">
+                                <div class="cell-tag">ESTAÇÃO DESIGNADA:</div>
+                                <div class="cell-val">ORBITAL ALPHA</div>
+                            </div>
+                            <div class="telemetry-cell">
+                                <div class="cell-tag">FROTA NO HANGAR:</div>
+                                <div class="cell-val" style="color: var(--cyan-neon);">2 NAVES DE COMBATE</div>
+                            </div>
+                            <div class="telemetry-cell">
+                                <div class="cell-tag">CRÉDITOS INICIAIS:</div>
+                                <div class="cell-val" style="color: var(--amber-gold);">150.000 CR</div>
+                            </div>
+                            <div class="telemetry-cell">
+                                <div class="cell-tag">SITUAÇÃO DE FROTA:</div>
+                                <div class="cell-val" style="color: var(--emerald-green);">PRONTO P/ VOO</div>
+                            </div>
+                        </div>
+
+                        <a href="HARPIA_UNIVERSE_v0.2.0.zip" download class="btn-download-client">
+                            ⬇ DESCARREGAR JOGO NATIVO WINDOWS (v0.2.0 .ZIP)
+                        </a>
+                        <p style="font-family: 'Share Tech Mono', monospace; font-size: 11.5px; color: var(--text-muted); margin-top: 14px;">
+                            Utiliza estas mesmas credenciais para iniciar sessão diretamente na janela nativa 1900 x 1000.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. OS 4 PILARES DO UNIVERSO -->
+        <section id="universo">
+            <div class="section-header">
+                <span class="section-tag">SIMULAÇÃO E COMANDO TOTAL</span>
+                <h2 class="section-headline">O UNIVERSO HARPIA</h2>
+            </div>
+
+            <div class="pillars-grid">
+                <!-- Pilar 1 -->
+                <div class="pillar-card">
+                    <div class="pillar-icon-code">[01 // FROTAS]</div>
+                    <h3 class="pillar-title">COMANDO DE COMBATE</h3>
+                    <p class="pillar-desc">Coordena naves de reconhecimento rápido e fragatas blindadas. Executa ordens táticas de interceptação, patrulha e combate em tempo real com físicas estelares.</p>
+                </div>
+
+                <!-- Pilar 2 -->
+                <div class="pillar-card" id="estacao">
+                    <div class="pillar-icon-code">[02 // BASES]</div>
+                    <h3 class="pillar-title">ESTAÇÕES ORBITAIS</h3>
+                    <p class="pillar-desc">A tua base operacional é o coração das tuas expedições. Expande módulos fabris, refinarias de minérios e hangares de ancoragem com escudos defensivos de longo alcance.</p>
+                </div>
+
+                <!-- Pilar 3 -->
+                <div class="pillar-card">
+                    <div class="pillar-icon-code">[03 // MERCADO]</div>
+                    <h3 class="pillar-title">ECONOMIA ESTELAR</h3>
+                    <p class="pillar-desc">Mercado de recursos vivos. Extrai minérios raros de asteroides, refina ligas metálicas e estabelece rotas de suprimentos para financiar as tuas expansões.</p>
+                </div>
+
+                <!-- Pilar 4 -->
+                <div class="pillar-card">
+                    <div class="pillar-icon-code">[04 // DIPLOMACIA]</div>
+                    <h3 class="pillar-title">SOBERANIA &amp; SETORES</h3>
+                    <p class="pillar-desc">Navega entre setores de alta segurança e zonas sem lei. Forja pactos com outros comandantes ou defende o teu território contra incursões hostis.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. ARSENAL DO HANGAR (AS 2 NAVES INICIAIS) -->
+        <section id="frotas">
+            <div class="section-header">
+                <span class="section-tag">UNIDADES OPERACIONAIS DE INÍCIO</span>
+                <h2 class="section-headline">FROTAS ANCORADAS NO HANGAR</h2>
+            </div>
+
+            <div class="hangar-grid">
+                <!-- Nave 1: Harpia Interceptor -->
+                <div class="ship-card">
+                    <div class="ship-classification">CLASSE RECONHECIMENTO RÁPIDO // TIER I</div>
+                    <h3 class="ship-name">HARPIA INTERCEPTOR</h3>
+                    <p class="ship-desc">
+                        Nave de patrulha ágil desenhada para manobras de evasão e reconhecimento de setores distantes. Equipada com sensores táteis de longo alcance e baterias de canhões cinéticos de cadência acelerada.
+                    </p>
+
+                    <div class="spec-bar-group">
+                        <div class="spec-bar-labels">
+                            <span>VELOCIDADE DE PROPULSÃO</span>
+                            <span>92%</span>
+                        </div>
+                        <div class="spec-track"><div class="spec-fill" style="width: 92%;"></div></div>
+                    </div>
+
+                    <div class="spec-bar-group">
+                        <div class="spec-bar-labels">
+                            <span>AGILIDADE &amp; EVASÃO</span>
+                            <span>88%</span>
+                        </div>
+                        <div class="spec-track"><div class="spec-fill" style="width: 88%;"></div></div>
+                    </div>
+
+                    <div class="spec-bar-group">
+                        <div class="spec-bar-labels">
+                            <span>BLINDAGEM DO CASCO</span>
+                            <span>45%</span>
+                        </div>
+                        <div class="spec-track"><div class="spec-fill" style="width: 45%;"></div></div>
+                    </div>
+                </div>
+
+                <!-- Nave 2: Valkyrie Frigate -->
+                <div class="ship-card">
+                    <div class="ship-classification">CLASSE FRAGATA TÁTICA PESADA // TIER I</div>
+                    <h3 class="ship-name">VALKYRIE FRIGATE</h3>
+                    <p class="ship-desc">
+                        Plataforma blindada de escolta e ataque sustentado. Estruturada com casco reforçado de liga dura, geradores duplos de escudos e baterias de mísseis guiados para controlo de perímetro orbital.
+                    </p>
+
+                    <div class="spec-bar-group">
+                        <div class="spec-bar-labels">
+                            <span>PODER DE FOGO BÉLICO</span>
+                            <span>85%</span>
+                        </div>
+                        <div class="spec-track"><div class="spec-fill" style="width: 85%;"></div></div>
+                    </div>
+
+                    <div class="spec-bar-group">
+                        <div class="spec-bar-labels">
+                            <span>ESCUDOS &amp; DEFESA</span>
+                            <span>90%</span>
+                        </div>
+                        <div class="spec-track"><div class="spec-fill" style="width: 90%;"></div></div>
+                    </div>
+
+                    <div class="spec-bar-group">
+                        <div class="spec-bar-labels">
+                            <span>CAPACIDADE DE CARGA</span>
+                            <span>78%</span>
+                        </div>
+                        <div class="spec-track"><div class="spec-fill" style="width: 78%;"></div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. REQUISITOS DE SISTEMA -->
+        <section id="requisitos" class="specs-panel">
+            <span class="section-tag">ESPECIFICAÇÕES TÉCNICAS</span>
+            <h3 style="font-family: 'Orbitron', sans-serif; font-size: 24px; color: var(--text-pure); letter-spacing: 1.5px;">
+                CLIENTE NATIVO WINDOWS // REQUISITOS OFICIAIS
+            </h3>
+            <p style="color: var(--text-body); font-size: 15px; margin-top: 6px;">
+                Desenvolvido nativamente em C# e WPF para tempos de resposta instantâneos e fluidez visual absoluta.
+            </p>
+
+            <div class="specs-columns">
+                <div class="spec-cell">
+                    <div class="cell-heading">SISTEMA OPERATIVO</div>
+                    <div class="cell-data">Windows 10 / Windows 11 (64-Bit)</div>
+                </div>
+                <div class="spec-cell">
+                    <div class="cell-heading">RESOLUÇÃO NATIVA</div>
+                    <div class="cell-data">1900 x 1000 pixels (Centrada)</div>
+                </div>
+                <div class="spec-cell">
+                    <div class="cell-heading">FRAMEWORK RUNTIME</div>
+                    <div class="cell-data">Microsoft .NET 9 Desktop Runtime</div>
+                </div>
+                <div class="spec-cell">
+                    <div class="cell-heading">LIGAÇÃO DE REDE</div>
+                    <div class="cell-data">Ligação de Banda Larga / WebSockets</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 7. RODAPÉ PREMIUM -->
+    <footer>
+        <div class="container footer-wrap">
+            <div class="footer-left">
+                <div class="brand-mark" style="height: 22px; width: 6px;"></div>
+                <div class="footer-copy">
+                    HARPIA UNIVERSE © 2026 // Petroff Games. Todos os direitos reservados.
+                </div>
+            </div>
+            <div class="footer-tagline">
+                SISTEMA DE COMANDO TÁTICO ESPACIAL // HARPIA UNIVERSE
+            </div>
+        </div>
+    </footer>
+
+    <!-- LÓGICA DE TERMINAL & ALISTAMENTO -->
+    <script>
+        function selectTab(tab) {
+            const loginF = document.getElementById('loginForm');
+            const regF = document.getElementById('regForm');
+            const alertB = document.getElementById('terminalAlert');
+            const tabs = document.querySelectorAll('.tab-btn');
+
+            alertB.className = 'alert-terminal';
+            alertB.style.display = 'none';
+
+            if (tab === 'login') {
+                loginF.style.display = 'block';
+                regF.style.display = 'none';
+                tabs[0].classList.add('active');
+                tabs[1].classList.remove('active');
+            } else {
+                loginF.style.display = 'none';
+                regF.style.display = 'block';
+                tabs[0].classList.remove('active');
+                tabs[1].classList.add('active');
+            }
+        }
+
+        function generateRandomCallsign() {
+            const prefixes = ['ApeX', 'Nova', 'Valkyrie', 'Orion', 'Ghost', 'Titan', 'Viper', 'Shadow', 'Solaris', 'Raven'];
+            const suffixes = ['Zero', 'Prime', 'Leader', 'Seven', 'X', 'Strike', 'One', 'Command', 'Hunter', 'Nine'];
+            const randP = prefixes[Math.floor(Math.random() * prefixes.length)];
+            const randS = suffixes[Math.floor(Math.random() * suffixes.length)];
+            const num = Math.floor(Math.random() * 89) + 10;
+            document.getElementById('inRegCallsign').value = randP + '_' + randS + num;
+        }
+
+        function executeLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('inLoginUser').value.trim();
+            const pass = document.getElementById('inLoginPass').value;
+
+            if (!user || !pass) {
+                showTerminalMessage('Por favor, introduz o Callsign e a Chave de Acesso.', 'error');
+                return;
+            }
+
+            renderAuthorizedPilot(user);
+        }
+
+        function executeRegister(e) {
+            e.preventDefault();
+            const callsign = document.getElementById('inRegCallsign').value.trim();
+            const email = document.getElementById('inRegEmail').value.trim();
+            const pass = document.getElementById('inRegPass').value;
+            const confirm = document.getElementById('inRegConfirm').value;
+
+            if (pass !== confirm) {
+                showTerminalMessage('As chaves de acesso não coincidem.', 'error');
+                return;
+            }
+
+            if (pass.length < 6) {
+                showTerminalMessage('A chave de acesso deve ter no mínimo 6 caracteres.', 'error');
+                return;
+            }
+
+            renderAuthorizedPilot(callsign);
+        }
+
+        function showTerminalMessage(msg, type) {
+            const alertB = document.getElementById('terminalAlert');
+            alertB.textContent = msg;
+            alertB.className = 'alert-terminal ' + type;
+            alertB.style.display = 'block';
+        }
+
+        function renderAuthorizedPilot(callsign) {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('regForm').style.display = 'none';
+            document.getElementById('tabGroup').style.display = 'none';
+            document.getElementById('terminalAlert').style.display = 'none';
+
+            document.getElementById('lblCallsign').textContent = callsign.toUpperCase();
+            const randId = Math.floor(Math.random() * 8999) + 1000;
+            document.getElementById('lblLicenseId').textContent = 'ID MILITAR: HP-2026-X' + randId;
+            document.getElementById('pilotLicenseCard').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "version": "0.2.0",
+  "name": "HARPIA UNIVERSE Alpha v0.2.0",
+  "downloadUrl": "https://extremefx.github.io/Harpia-Universe/HARPIA_UNIVERSE_v0.2.0.zip",
+  "sha256": "D12FED3E3CE708DC357E26B6DDE789FAE0D145FE5AC8548FFC9B0718EAA3CCD8",
+  "mandatory": true,
+  "notes": "Fundacao nativa Windows C# + WPF (1900x1000) com autenticacao real e frotas iniciais no hangar."
+}
