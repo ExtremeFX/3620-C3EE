@@ -1103,9 +1103,47 @@
             document.getElementById('inRegCallsign').value = randP + '_' + randS + num;
         }
 
-        const API_BASE = (window.location.protocol === 'http:' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
-            ? ''
-            : 'http://127.0.0.1:8000';
+        // ─── CONFIGURAÇÃO DE AMBIENTE (SERVER ENDPOINTS) ─────────────────────────
+        const SERVER_CONFIG = {
+            // Ambiente de desenvolvimento local:
+            DEVELOPMENT_ENDPOINT: 'http://127.0.0.1:8000',
+
+            // Ambiente de produção (GitHub Pages / domínio público):
+            // Quando publicado, comunica EXCLUSIVAMENTE com o endpoint público HTTPS configurado.
+            // Se ainda não existir um domínio HTTPS configurado, mantém-se null para NUNCA
+            // assumir silenciosamente o localhost do visitante como servidor de produção.
+            PRODUCTION_ENDPOINT: null // Exemplo: 'https://api.harpiauniverse.com'
+        };
+
+        // Deteção estrita de ambiente de desenvolvimento
+        const IS_LOCAL_DEV = window.location.protocol === 'file:' ||
+                             window.location.hostname === 'localhost' ||
+                             window.location.hostname === '127.0.0.1' ||
+                             window.location.hostname === '[::1]';
+
+        function resolveServerEndpoint() {
+            if (IS_LOCAL_DEV) {
+                // Se a página for servida diretamente pelo Fastify local (ex: http://localhost:8000/web/index.html),
+                // usamos caminhos relativos ('') para total compatibilidade de porta/origem.
+                if (window.location.protocol === 'http:' && (window.location.port === '8000' || window.location.host === '127.0.0.1:8000')) {
+                    return '';
+                }
+                return SERVER_CONFIG.DEVELOPMENT_ENDPOINT;
+            }
+
+            // Em produção (GitHub Pages ou host público):
+            // Retorna estritamente o endpoint HTTPS público ou null se não configurado.
+            return SERVER_CONFIG.PRODUCTION_ENDPOINT;
+        }
+
+        const SERVER_ENDPOINT = resolveServerEndpoint();
+
+        function getEndpointDisplayTarget() {
+            if (IS_LOCAL_DEV) {
+                return SERVER_CONFIG.DEVELOPMENT_ENDPOINT;
+            }
+            return SERVER_CONFIG.PRODUCTION_ENDPOINT || 'Servidor Central de Produção (HTTPS)';
+        }
 
         async function executeLogin(e) {
             e.preventDefault();
@@ -1117,12 +1155,18 @@
                 return;
             }
 
+            // Regra de segurança: em produção, rejeitar pedidos se não houver endpoint público HTTPS
+            if (!IS_LOCAL_DEV && !SERVER_ENDPOINT) {
+                showTerminalMessage('❌ Servidor de produção não configurado: O registo/login na web requer um endpoint público HTTPS ativo. Não é permitido ligar ao localhost em produção.', 'error');
+                return;
+            }
+
             const btn = e.target.querySelector('button[type="submit"]');
             if (btn) btn.disabled = true;
             showTerminalMessage('A autenticar com o servidor central...', 'info');
 
             try {
-                const res = await fetch(`${API_BASE}/auth/login`, {
+                const res = await fetch(`${SERVER_ENDPOINT}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: user, password: pass })
@@ -1136,7 +1180,12 @@
                     showTerminalMessage('❌ ' + msg, 'error');
                 }
             } catch (err) {
-                showTerminalMessage('❌ Servidor offline ou inacessível em ' + (API_BASE || 'localhost:8000') + '. Inicia o servidor com "1. LIGAR SERVIDOR.bat". Se estiveres no GitHub Pages, abre via http://localhost:8000/web/index.html.', 'error');
+                const target = getEndpointDisplayTarget();
+                if (IS_LOCAL_DEV) {
+                    showTerminalMessage(`❌ Erro de ligação: O servidor de desenvolvimento local está indisponível em ${target}. Inicia o servidor através de "1. LIGAR SERVIDOR.bat".`, 'error');
+                } else {
+                    showTerminalMessage(`❌ Erro de ligação: Servidor central indisponível (${target}). Tenta novamente mais tarde.`, 'error');
+                }
             } finally {
                 if (btn) btn.disabled = false;
             }
@@ -1164,12 +1213,18 @@
                 return;
             }
 
+            // Regra de segurança: em produção, rejeitar pedidos se não houver endpoint público HTTPS
+            if (!IS_LOCAL_DEV && !SERVER_ENDPOINT) {
+                showTerminalMessage('❌ Servidor de produção não configurado: O registo de novos pilotos requer um endpoint público HTTPS ativo. Não é permitido ligar ao localhost em produção.', 'error');
+                return;
+            }
+
             const btn = e.target.querySelector('button[type="submit"]');
             if (btn) btn.disabled = true;
             showTerminalMessage('A registar novo piloto no servidor central...', 'info');
 
             try {
-                const res = await fetch(`${API_BASE}/auth/register`, {
+                const res = await fetch(`${SERVER_ENDPOINT}/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1192,7 +1247,12 @@
                     showTerminalMessage('❌ ' + msg, 'error');
                 }
             } catch (err) {
-                showTerminalMessage('❌ Servidor offline ou inacessível em ' + (API_BASE || 'localhost:8000') + '. Inicia o servidor com "1. LIGAR SERVIDOR.bat". Se o browser bloquear HTTP a partir de HTTPS (GitHub Pages), acede por http://localhost:8000/web/index.html.', 'error');
+                const target = getEndpointDisplayTarget();
+                if (IS_LOCAL_DEV) {
+                    showTerminalMessage(`❌ Erro de ligação: O servidor de desenvolvimento local está indisponível em ${target}. Inicia o servidor através de "1. LIGAR SERVIDOR.bat".`, 'error');
+                } else {
+                    showTerminalMessage(`❌ Erro de ligação: Servidor central indisponível (${target}). Tenta novamente mais tarde.`, 'error');
+                }
             } finally {
                 if (btn) btn.disabled = false;
             }
